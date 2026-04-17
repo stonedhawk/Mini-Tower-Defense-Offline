@@ -6,10 +6,12 @@ class HudBridge {
   final ValueNotifier<int> gold = ValueNotifier(GameConstants.startingGold);
   final ValueNotifier<int> lives = ValueNotifier(GameConstants.startingLives);
   final ValueNotifier<int> wave = ValueNotifier(GameConstants.startingWave);
+  final ValueNotifier<int?> selectedPadIndex = ValueNotifier(null);
 
   void reset() {
     gold.value = GameConstants.startingGold;
     lives.value = GameConstants.startingLives;
     wave.value = GameConstants.startingWave;
+    selectedPadIndex.value = null;
   }
 }

@@ -109,6 +109,54 @@ class _GameScreenState extends State<GameScreen> {
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
+          // Tower Selection Overlay
+          ValueListenableBuilder<int?>(
+            valueListenable: _hudBridge.selectedPadIndex,
+            builder: (context, padIndex, child) {
+              if (padIndex == null) return const SizedBox.shrink();
+
+              return Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTowerButton('Dart', 40, Colors.grey, padIndex),
+                        const SizedBox(width: 16),
+                        IconButton(
+                          icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                          onPressed: () => _hudBridge.selectedPadIndex.value = null,
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTowerButton(String type, int cost, Color color, int padIndex) {
+    return ElevatedButton(
+      onPressed: () => _game.buildTower(padIndex, type),
+      style: ElevatedButton.styleFrom(backgroundColor: color),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(type, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('\$$cost'),
         ],
       ),
     );
