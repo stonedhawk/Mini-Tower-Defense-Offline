@@ -5,6 +5,8 @@ import 'config/game_constants.dart';
 import 'config/path_points.dart';
 import 'config/build_pads.dart';
 import 'components/enemy_component.dart';
+import 'components/build_pad_component.dart';
+import 'components/tower_component.dart';
 import 'package:flame/components.dart';
 
 class MiniTdGame extends FlameGame {
@@ -39,12 +41,11 @@ class MiniTdGame extends FlameGame {
     }
 
     // Render build pads
-    for (final pos in BuildPadConfig.padLocations) {
-      add(RectangleComponent(
-        position: pos,
+    for (int i = 0; i < BuildPadConfig.padLocations.length; i++) {
+      add(BuildPadComponent(
+        padIndex: i,
+        position: BuildPadConfig.padLocations[i],
         size: Vector2.all(BuildPadConfig.padSize),
-        anchor: Anchor.center,
-        paint: Paint()..color = const Color(0xFF795548), // Brown pad
       ));
     }
 
@@ -56,6 +57,23 @@ class MiniTdGame extends FlameGame {
         add(ScoutEnemy());
       },
     ));
+  }
+
+  void onPadTapped(int index) {
+    hudBridge.selectedPadIndex.value = index;
+  }
+
+  void buildTower(int padIndex, String towerType) {
+    // Only handling Dart for now
+    if (towerType == 'Dart' && hudBridge.gold.value >= 40) {
+      final pad = children.whereType<BuildPadComponent>().firstWhere((p) => p.padIndex == padIndex);
+      if (!pad.isOccupied) {
+        hudBridge.gold.value -= 40;
+        add(DartTowerComponent(position: pad.position));
+        pad.isOccupied = true;
+      }
+    }
+    hudBridge.selectedPadIndex.value = null; // dismiss UI
   }
 }
 

@@ -46,6 +46,17 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
     }
   }
 
+  double distanceToTargetOrExit() {
+    double distance = 0;
+    if (_currentWaypointIndex < PathConfig.waypoints.length - 1) {
+      distance += position.distanceTo(PathConfig.waypoints[_currentWaypointIndex + 1]);
+      for (int i = _currentWaypointIndex + 1; i < PathConfig.waypoints.length - 1; i++) {
+        distance += PathConfig.waypoints[i].distanceTo(PathConfig.waypoints[i + 1]);
+      }
+    }
+    return distance;
+  }
+
   void _leak() {
     game.hudBridge.lives.value -= leakDamage;
     if (game.hudBridge.lives.value < 0) {
