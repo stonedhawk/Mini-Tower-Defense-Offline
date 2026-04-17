@@ -2,10 +2,31 @@ import 'package:flutter/material.dart';
 import '../../game/mini_td_game.dart';
 import '../../game/components/hud_bridge.dart';
 import '../results/result_screen.dart';
+import '../storage/save_service.dart';
 import 'package:flame/game.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _bestWave = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBestWave();
+  }
+
+  Future<void> _loadBestWave() async {
+    final best = await SaveService.getBestWave();
+    setState(() {
+      _bestWave = best;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,14 +44,21 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
+            const SizedBox(height: 20),
+            Text(
+              'Best Wave Reached: $_bestWave',
+              style: const TextStyle(fontSize: 24, color: Colors.amber),
+            ),
             const SizedBox(height: 50),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
+              onPressed: () async {
+                await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const GameScreen(),
                   ),
                 );
+                // Refresh best wave when coming back from game
+                _loadBestWave();
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),

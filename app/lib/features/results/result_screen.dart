@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../storage/save_service.dart';
 
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends StatefulWidget {
   final bool didWin;
   final int waveReached;
 
@@ -11,6 +12,18 @@ class ResultScreen extends StatelessWidget {
   });
 
   @override
+  State<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends State<ResultScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    SaveService.saveBestWave(widget.waveReached);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
@@ -19,16 +32,16 @@ class ResultScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              didWin ? 'VICTORY' : 'GAME OVER',
+              widget.didWin ? 'VICTORY' : 'GAME OVER',
               style: TextStyle(
                 fontSize: 64,
                 fontWeight: FontWeight.bold,
-                color: didWin ? Colors.greenAccent : Colors.redAccent,
+                color: widget.didWin ? Colors.greenAccent : Colors.redAccent,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Waves Cleared: $waveReached',
+              'Waves Cleared: ${widget.waveReached}',
               style: const TextStyle(fontSize: 32, color: Colors.white),
             ),
             const SizedBox(height: 50),
