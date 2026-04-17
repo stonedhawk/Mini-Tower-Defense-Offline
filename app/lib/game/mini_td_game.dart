@@ -4,6 +4,7 @@ import 'components/hud_bridge.dart';
 import 'config/game_constants.dart';
 import 'config/path_points.dart';
 import 'config/build_pads.dart';
+import 'components/enemy_component.dart';
 import 'package:flame/components.dart';
 
 class MiniTdGame extends FlameGame {
@@ -46,6 +47,15 @@ class MiniTdGame extends FlameGame {
         paint: Paint()..color = const Color(0xFF795548), // Brown pad
       ));
     }
+
+    // Temporary Test: Spawn a Scout Enemy every 3 seconds to verify path movement
+    add(TimerComponent(
+      period: 3.0,
+      repeat: true,
+      onTick: () {
+        add(ScoutEnemy());
+      },
+    ));
   }
 }
 
