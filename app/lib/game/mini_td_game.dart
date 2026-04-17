@@ -4,15 +4,20 @@ import 'components/hud_bridge.dart';
 import 'config/game_constants.dart';
 import 'config/path_points.dart';
 import 'config/build_pads.dart';
-import 'components/enemy_component.dart';
 import 'components/build_pad_component.dart';
 import 'components/tower_component.dart';
+import 'systems/wave_manager.dart';
 import 'package:flame/components.dart';
 
 class MiniTdGame extends FlameGame {
   final HudBridge hudBridge;
+  final Function(bool win) onGameOver;
+  late final WaveManager _waveManager;
 
-  MiniTdGame({required this.hudBridge}) 
+  MiniTdGame({
+    required this.hudBridge,
+    required this.onGameOver,
+  }) 
       : super(
           camera: CameraComponent.withFixedResolution(
             width: GameConstants.logicalWidth,
@@ -49,14 +54,17 @@ class MiniTdGame extends FlameGame {
       ));
     }
 
-    // Temporary Test: Spawn a Scout Enemy every 3 seconds to verify path movement
-    add(TimerComponent(
-      period: 3.0,
-      repeat: true,
-      onTick: () {
-        add(ScoutEnemy());
-      },
-    ));
+    // Initialize WaveManager
+    _waveManager = WaveManager();
+    add(_waveManager);
+    
+    // Start game
+    _waveManager.startNextWave();
+  }
+
+  void triggerGameOver({required bool win}) {
+    pauseEngine(); // Stop updates
+    onGameOver(win);
   }
 
   void onPadTapped(int index) {
@@ -64,12 +72,30 @@ class MiniTdGame extends FlameGame {
   }
 
   void buildTower(int padIndex, String towerType) {
-    // Only handling Dart for now
-    if (towerType == 'Dart' && hudBridge.gold.value >= 40) {
+    if (hudBridge.gold.value <= 0) return;
+
+    int cost = 0;
+    if (towerType == 'Dart') cost = 40;
+    if (towerType == 'Cannon') cost = 70;
+    if (towerType == 'Frost') cost = 60;
+
+    if (hudBridge.gold.value >= cost && cost > 0) {
       final pad = children.whereType<BuildPadComponent>().firstWhere((p) => p.padIndex == padIndex);
       if (!pad.isOccupied) {
-        hudBridge.gold.value -= 40;
-        add(DartTowerComponent(position: pad.position));
+        hudBridge.gold.value -= cost;
+        
+        switch (towerType) {
+          case 'Dart':
+            add(DartTowerComponent(position: pad.position));
+            break;
+          case 'Cannon':
+            add(CannonTowerComponent(position: pad.position));
+            break;
+          case 'Frost':
+            add(FrostTowerComponent(position: pad.position));
+            break;
+        }
+        
         pad.isOccupied = true;
       }
     }
