@@ -59,11 +59,16 @@ abstract class TowerComponent extends PositionComponent with HasGameReference<Mi
   }
 
   void _fireProjectile(EnemyComponent target) {
+    bool isFrost = this is FrostTowerComponent;
+    double splashRadius = this is CannonTowerComponent ? 32.0 : 0.0;
+
     game.add(ProjectileComponent(
       sourcePosition: position.clone(),
       target: target,
       damage: damage,
       speed: projectileSpeed,
+      splashRadius: splashRadius,
+      isFrost: isFrost,
     ));
   }
 }
@@ -81,6 +86,40 @@ class DartTowerComponent extends TowerComponent {
   void render(Canvas canvas) {
     super.render(canvas);
     final paint = Paint()..color = const Color(0xFF9E9E9E); // Grey tower
+    canvas.drawRect(size.toRect(), paint);
+  }
+}
+
+class CannonTowerComponent extends TowerComponent {
+  CannonTowerComponent({required super.position})
+      : super(
+          attackRange: 125.0,
+          damage: 14,
+          cooldown: 1.4,
+          projectileSpeed: 220.0,
+        );
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final paint = Paint()..color = const Color(0xFF424242); // Darker Grey / Black
+    canvas.drawCircle((size / 2).toOffset(), size.x / 2, paint);
+  }
+}
+
+class FrostTowerComponent extends TowerComponent {
+  FrostTowerComponent({required super.position})
+      : super(
+          attackRange: 100.0,
+          damage: 4,
+          cooldown: 0.8,
+          projectileSpeed: 260.0,
+        );
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final paint = Paint()..color = const Color(0xFF81D4FA); // Light Blue
     canvas.drawRect(size.toRect(), paint);
   }
 }

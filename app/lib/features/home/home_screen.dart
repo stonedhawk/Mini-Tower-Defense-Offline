@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../game/mini_td_game.dart';
 import '../../game/components/hud_bridge.dart';
+import '../results/result_screen.dart';
 import 'package:flame/game.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -58,7 +59,19 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _hudBridge = HudBridge();
-    _game = MiniTdGame(hudBridge: _hudBridge);
+    _game = MiniTdGame(
+      hudBridge: _hudBridge,
+      onGameOver: (win) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => ResultScreen(
+              didWin: win,
+              waveReached: _hudBridge.wave.value,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -131,6 +144,10 @@ class _GameScreenState extends State<GameScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _buildTowerButton('Dart', 40, Colors.grey, padIndex),
+                        const SizedBox(width: 8),
+                        _buildTowerButton('Cannon', 70, Colors.blueGrey, padIndex),
+                        const SizedBox(width: 8),
+                        _buildTowerButton('Frost', 60, Colors.lightBlue, padIndex),
                         const SizedBox(width: 16),
                         IconButton(
                           icon: const Icon(Icons.cancel, color: Colors.redAccent),

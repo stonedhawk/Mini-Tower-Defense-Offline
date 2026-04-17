@@ -5,15 +5,18 @@ import '../mini_td_game.dart';
 
 class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame> {
   int hp;
-  final double speed;
+  final double baseSpeed;
   final int goldReward;
   final int leakDamage;
+  
+  double speedMultiplier = 1.0;
+  double _slowTimer = 0.0;
   
   int _currentWaypointIndex = 0;
 
   EnemyComponent({
     required this.hp,
-    required this.speed,
+    required this.baseSpeed,
     required this.goldReward,
     required this.leakDamage,
   }) {
@@ -30,9 +33,16 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
       return;
     }
 
+    if (_slowTimer > 0) {
+      _slowTimer -= dt;
+      if (_slowTimer <= 0) {
+        speedMultiplier = 1.0;
+      }
+    }
+
     final target = PathConfig.waypoints[_currentWaypointIndex + 1];
     final dir = (target - position)..normalize();
-    final step = speed * dt;
+    final step = baseSpeed * speedMultiplier * dt;
 
     if (position.distanceTo(target) <= step) {
       position = target.clone();
@@ -57,6 +67,11 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
     return distance;
   }
 
+  void applySlow(double multiplier, double duration) {
+    speedMultiplier = multiplier;
+    _slowTimer = duration;
+  }
+
   void _leak() {
     game.hudBridge.lives.value -= leakDamage;
     if (game.hudBridge.lives.value < 0) {
@@ -77,7 +92,7 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
 class ScoutEnemy extends EnemyComponent {
   ScoutEnemy() : super(
     hp: 18,
-    speed: 42,
+    baseSpeed: 42,
     goldReward: 8,
     leakDamage: 1,
   );
@@ -87,5 +102,41 @@ class ScoutEnemy extends EnemyComponent {
     super.render(canvas);
     final paint = Paint()..color = const Color(0xFFF44336); // Red dot
     canvas.drawCircle((size / 2).toOffset(), size.x / 2, paint);
+  }
+}
+
+class TankEnemy extends EnemyComponent {
+  TankEnemy() : super(
+    hp: 48,
+    baseSpeed: 24,
+    goldReward: 16,
+    leakDamage: 1,
+  ) {
+    size = Vector2(32, 32);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final paint = Paint()..color = const Color(0xFFE65100); // Orange
+    canvas.drawRect(size.toRect(), paint);
+  }
+}
+
+class SwarmEnemy extends EnemyComponent {
+  SwarmEnemy() : super(
+    hp: 10,
+    baseSpeed: 55,
+    goldReward: 5,
+    leakDamage: 1,
+  ) {
+    size = Vector2(16, 16);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final paint = Paint()..color = const Color(0xFFFDD835); // Yellow
+    canvas.drawRect(size.toRect(), paint);
   }
 }
