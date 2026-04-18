@@ -1,6 +1,5 @@
 import 'package:flame/components.dart';
 import '../mini_td_game.dart';
-import '../config/waves.dart';
 import '../components/enemy_component.dart';
 
 class WaveManager extends Component with HasGameReference<MiniTdGame> {
@@ -8,67 +7,101 @@ class WaveManager extends Component with HasGameReference<MiniTdGame> {
   int currentSpawnIndex = 0;
   double _spawnTimer = 0;
   bool isSpawning = false;
-  
+
   void startNextWave() {
-    if (currentWaveIndex < WaveConfig.waves.length) {
-      isSpawning = true;
-      currentSpawnIndex = 0;
-      _spawnTimer = 0.7; // initial brief delay
-      game.hudBridge.wave.value = currentWaveIndex + 1;
-    }
+    isSpawning = true;
+    currentSpawnIndex = 0;
+    _spawnTimer = 0.7;
+    game.hudBridge.wave.value = currentWaveIndex + 1;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    
-    // Check Loss Condition
+
+    // Loss condition
     if (game.hudBridge.lives.value <= 0) {
       game.triggerGameOver(win: false);
       return;
     }
 
     if (!isSpawning) {
-      if (currentWaveIndex >= WaveConfig.waves.length) return; // Already finished sequence
-
-      // If finished spawning, check if screen is wiped
       final enemies = game.children.whereType<EnemyComponent>();
-      if (enemies.isEmpty && currentSpawnIndex >= WaveConfig.waves[currentWaveIndex].length) {
-        // Wave fully cleared
-        game.hudBridge.gold.value += 20; // PRD: 20 gold wave clear bonus
+      bool waveFinished = false;
+
+      if (currentWaveIndex < game.levelData.waves.length) {
+        waveFinished = enemies.isEmpty &&
+            currentSpawnIndex >= game.levelData.waves[currentWaveIndex].length;
+      } else {
+        final expectedCount =
+            10 + (currentWaveIndex - game.levelData.waves.length + 1) * 2;
+        waveFinished =
+            enemies.isEmpty && currentSpawnIndex >= expectedCount;
+      }
+
+      if (waveFinished) {
+        game.hudBridge.gold.value += 20;
         currentWaveIndex++;
-        
-        if (currentWaveIndex >= WaveConfig.waves.length) {
+
+        // Win condition — all defined waves cleared
+        if (currentWaveIndex >= game.levelData.waves.length) {
           game.triggerGameOver(win: true);
-        } else {
-          // MVP simple feature: Start next automatically (no Start wave button)
-          startNextWave();
+          return;
         }
+
+        // Unlock 2 new build pads every 3 waves (after waves 3 and 6)
+        if (currentWaveIndex == 3 || currentWaveIndex == 6) {
+          game.unlockNextPadBatch(2);
+        }
+
+        startNextWave();
       }
       return;
     }
 
-    // Handle spawn interval
+    // Spawn interval
     _spawnTimer -= dt;
     if (_spawnTimer <= 0) {
-      _spawnTimer = 0.7; // default interval
-      final waveList = WaveConfig.waves[currentWaveIndex];
-      final enemyType = waveList[currentSpawnIndex];
-      
+      _spawnTimer = 0.7;
+
+      String enemyType = 'Scout';
+      // Start with the map's difficulty multiplier; endless mode stacks on top.
+      double statMultiplier = game.levelData.difficultyMultiplier;
+      int waveSize = 0;
+
+      if (currentWaveIndex < game.levelData.waves.length) {
+        final waveList = game.levelData.waves[currentWaveIndex];
+        enemyType = waveList[currentSpawnIndex];
+        waveSize = waveList.length;
+      } else {
+        final endlessCount = currentWaveIndex - game.levelData.waves.length + 1;
+        waveSize = 10 + endlessCount * 2;
+        statMultiplier = game.levelData.difficultyMultiplier * (1.0 + endlessCount * 0.15);
+
+        final rand = (currentSpawnIndex + currentWaveIndex * 7) % 10;
+        if (rand < 5) {
+          enemyType = 'Scout';
+        } else if (rand < 8) {
+          enemyType = 'Swarm';
+        } else {
+          enemyType = 'Tank';
+        }
+      }
+
       switch (enemyType) {
         case 'Scout':
-          game.add(ScoutEnemy());
+          game.add(ScoutEnemy(statMultiplier: statMultiplier));
           break;
         case 'Tank':
-          game.add(TankEnemy());
+          game.add(TankEnemy(statMultiplier: statMultiplier));
           break;
         case 'Swarm':
-          game.add(SwarmEnemy());
+          game.add(SwarmEnemy(statMultiplier: statMultiplier));
           break;
       }
 
       currentSpawnIndex++;
-      if (currentSpawnIndex >= waveList.length) {
+      if (currentSpawnIndex >= waveSize) {
         isSpawning = false;
       }
     }
