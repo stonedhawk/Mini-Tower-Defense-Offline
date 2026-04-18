@@ -15,8 +15,10 @@ abstract class TowerComponent extends PositionComponent
   double cooldown;
   double projectileSpeed;
   int level = 1;
+
   int get baseUpgradeCost => (damage * 2) + (attackRange ~/ 10);
-  int get upgradeCost => (baseUpgradeCost * math.pow(1.5, level - 1)).ceil();
+  // 1.8× per level gives aggressively scaling costs (L10 ≈ 90× base cost).
+  int get upgradeCost => (baseUpgradeCost * math.pow(1.8, level - 1)).ceil();
 
   double _currentCooldown = 0.0;
   double _auraTimer = 0.0;
@@ -32,7 +34,6 @@ abstract class TowerComponent extends PositionComponent
     required Vector2 position,
   }) : super(position: position, size: Vector2(40, 40), anchor: Anchor.center);
 
-  /// Each subclass provides the sprite sheet asset path.
   String get spritePath;
 
   @override
@@ -61,7 +62,6 @@ abstract class TowerComponent extends PositionComponent
     _animTicker?.update(dt);
     if (!isMounted) return;
 
-    // Booster aura check (throttled to 5 Hz)
     _auraTimer -= dt;
     if (_auraTimer <= 0) {
       _auraTimer = 0.2;
@@ -107,14 +107,18 @@ abstract class TowerComponent extends PositionComponent
 
   bool get canUpgrade => level < game.levelData.maxTowerLevel;
 
-  void upgrade() {
-    if (canUpgrade && game.hudBridge.gold.value >= upgradeCost) {
-      game.hudBridge.gold.value -= upgradeCost;
-      level++;
-      damage += 2;
-      attackRange += 10;
-      cooldown = (cooldown * 0.9).clamp(0.2, double.infinity);
-    }
+  // Returns true on success, false when not enough gold.
+  bool upgrade() {
+    if (!canUpgrade) return false;
+    if (game.hudBridge.gold.value < upgradeCost) return false;
+    game.hudBridge.gold.value -= upgradeCost;
+    level++;
+    damage += 2;
+    attackRange += 10;
+    cooldown = (cooldown * 0.9).clamp(0.2, double.infinity);
+    // Grow sprite visually: +4px per level beyond 1, centred on the anchor.
+    size = Vector2.all(40.0 + (level - 1) * 4.0);
+    return true;
   }
 
   void _fireProjectile(EnemyComponent target) {
@@ -133,7 +137,6 @@ abstract class TowerComponent extends PositionComponent
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Range indicator when selected
     if (game.hudBridge.selectedTowerId.value == hashCode) {
       canvas.drawCircle(
         (size / 2).toOffset(),
@@ -152,12 +155,11 @@ abstract class TowerComponent extends PositionComponent
       );
     }
 
-    // Sprite fills the component bounds
     _animTicker?.currentFrame.sprite.render(canvas, size: size);
   }
 }
 
-// ── Subclasses ────────────────────────────────────────────────────
+// ── Subclasses ─────────────────────────────────────────────────────────────
 
 class DartTowerComponent extends TowerComponent {
   DartTowerComponent({required super.position})
@@ -169,7 +171,7 @@ class DartTowerComponent extends TowerComponent {
 
 class CannonTowerComponent extends TowerComponent {
   CannonTowerComponent({required super.position})
-      : super(attackRange: 125.0, damage: 14, cooldown: 1.4, projectileSpeed: 220.0);
+      : super(attackRange: 125.0, damage: 16, cooldown: 1.4, projectileSpeed: 220.0);
 
   @override
   String get spritePath => 'sprites/tower_cannon.png';
@@ -177,7 +179,7 @@ class CannonTowerComponent extends TowerComponent {
 
 class FrostTowerComponent extends TowerComponent {
   FrostTowerComponent({required super.position})
-      : super(attackRange: 100.0, damage: 4, cooldown: 0.8, projectileSpeed: 260.0);
+      : super(attackRange: 100.0, damage: 6, cooldown: 0.8, projectileSpeed: 260.0);
 
   @override
   String get spritePath => 'sprites/tower_frost.png';
@@ -190,17 +192,29 @@ class BoosterTowerComponent extends TowerComponent {
   @override
   String get spritePath => 'sprites/tower_booster.png';
 
+  // Use a flat base cost so the upgrade formula produces meaningful numbers.
+  @override
+  int get baseUpgradeCost => 50;
+
+  @override
+  bool upgrade() {
+    if (!canUpgrade) return false;
+    if (game.hudBridge.gold.value < upgradeCost) return false;
+    game.hudBridge.gold.value -= upgradeCost;
+    level++;
+    attackRange *= 3; // 3× range per upgrade (not flat +10)
+    size = Vector2.all(40.0 + (level - 1) * 4.0);
+    return true;
+  }
+
   @override
   void update(double dt) {
-    // No targeting or firing — just tick animation and aura timer
     _animTicker?.update(dt);
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-
-    // Pulsing aura ring on top of sprite
     final pulse = 0.15 + 0.05 * math.sin(game.elapsedTime * 3);
     canvas.drawCircle(
       (size / 2).toOffset(),

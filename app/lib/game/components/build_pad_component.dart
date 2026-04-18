@@ -16,15 +16,15 @@ class BuildPadComponent extends PositionComponent with HasGameReference<MiniTdGa
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final paint = Paint()..color = const Color(0xFF795548); // Brown pad
+    // Once occupied a tower sits here — hide the pad box completely.
+    if (isOccupied) return;
+    final paint = Paint()..color = const Color(0xFF795548);
     canvas.drawRect(size.toRect(), paint);
-    // Draw range indicator if this pad is currently selected
     if (game.hudBridge.selectedPadIndex.value == padIndex) {
       final rangePaint = Paint()
-        ..color = const Color(0x80FFFFFF) // white with 50% opacity
+        ..color = const Color(0x80FFFFFF)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0;
-      // Use a generic radius (e.g., 120) – could be refined later based on tower type
       canvas.drawCircle((size / 2).toOffset(), 120, rangePaint);
     }
   }
