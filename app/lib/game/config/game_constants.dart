@@ -7,4 +7,5 @@ class GameConstants {
   static const int startingGold = 120;
   static const int startingLives = 10;
   static const int startingWave = 1;
+  static const double padSize = 64.0;
 }
