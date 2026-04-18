@@ -5,12 +5,14 @@ class ResultScreen extends StatefulWidget {
   final int levelId;
   final bool didWin;
   final int waveReached;
+  final bool isEndlessMode;
 
   const ResultScreen({
     super.key,
     required this.levelId,
     required this.didWin,
     required this.waveReached,
+    this.isEndlessMode = false,
   });
 
   @override
@@ -18,15 +20,28 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
+  int _bestWave = 0;
 
   @override
   void initState() {
     super.initState();
     SaveService.saveBestWave(widget.levelId, widget.waveReached);
+    _loadBestWave();
+  }
+
+  Future<void> _loadBestWave() async {
+    final best = await SaveService.getBestWave(widget.levelId);
+    if (mounted) setState(() => _bestWave = best);
   }
 
   @override
   Widget build(BuildContext context) {
+    final headline = widget.didWin ? 'VICTORY' : 'GAME OVER';
+    final headlineColor = widget.didWin ? Colors.greenAccent : Colors.redAccent;
+    final waveLine = widget.isEndlessMode
+        ? 'Waves Survived: ${widget.waveReached}'
+        : 'Waves Cleared: ${widget.waveReached}';
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
@@ -34,22 +49,28 @@ class _ResultScreenState extends State<ResultScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              widget.didWin ? 'VICTORY' : 'GAME OVER',
+              headline,
               style: TextStyle(
                 fontSize: 64,
                 fontWeight: FontWeight.bold,
-                color: widget.didWin ? Colors.greenAccent : Colors.redAccent,
+                color: headlineColor,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Waves Cleared: ${widget.waveReached}',
+              waveLine,
               style: const TextStyle(fontSize: 32, color: Colors.white),
             ),
+            if (widget.isEndlessMode) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Best Score: $_bestWave waves',
+                style: const TextStyle(fontSize: 22, color: Colors.amber),
+              ),
+            ],
             const SizedBox(height: 50),
             ElevatedButton(
               onPressed: () {
-                // Pop back to home screen
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
               style: ElevatedButton.styleFrom(
