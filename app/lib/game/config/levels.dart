@@ -41,6 +41,17 @@ class LevelRegistry {
       // --- Wave-6 unlock (+2) ---
       Vector2(150, 85),    // 10 above top-left horizontal (y=150)
       Vector2(1150, 265),  // 11 below exit horizontal, far right
+      // --- Bonus: one pad per 8 waves from wave 12 (indices 12-21) ---
+      Vector2(360, 565),   // 12 below bottom horizontal, left
+      Vector2(480, 435),   // 13 above bottom horizontal
+      Vector2(540, 565),   // 14 below bottom horizontal
+      Vector2(660, 435),   // 15 above bottom horizontal
+      Vector2(720, 565),   // 16 below bottom horizontal
+      Vector2(780, 435),   // 17 above bottom horizontal
+      Vector2(840, 565),   // 18 below bottom horizontal
+      Vector2(360, 435),   // 19 above bottom horizontal, left
+      Vector2(480, 565),   // 20 below bottom horizontal
+      Vector2(660, 565),   // 21 below bottom horizontal
     ],
     initialPadCount: 8,
     waves: _standardWaves,
@@ -82,6 +93,17 @@ class LevelRegistry {
       // --- Wave-6 unlock (+2) ---
       Vector2(665, 350),   // 10 right of center vertical (x=600)
       Vector2(1150, 135),  // 11 above exit horizontal (y=200)
+      // --- Bonus: one pad per 8 waves from wave 12 (indices 12-21) ---
+      Vector2(400, 435),   // 12 above entry + bottom horizontals, left-center
+      Vector2(300, 435),   // 13 above entry horizontal
+      Vector2(700, 565),   // 14 below middle horizontal (y=500)
+      Vector2(800, 565),   // 15 below middle horizontal
+      Vector2(500, 435),   // 16 above left top horizontal, right section
+      Vector2(600, 435),   // 17 near center vertical from above
+      Vector2(900, 435),   // 18 above middle horizontal, right
+      Vector2(300, 265),   // 19 below left top horizontal (y=200)
+      Vector2(700, 435),   // 20 above middle horizontal, center-right
+      Vector2(500, 565),   // 21 below middle horizontal, center
     ],
     initialPadCount: 8,
     waves: _standardWaves,
@@ -121,6 +143,17 @@ class LevelRegistry {
       // --- Wave-6 unlock (+2) ---
       Vector2(265, 215),   // 10 inside corner: right of x=200 + below y=150
       Vector2(950, 385),   // 11 above bottom horizontal, near exit vertical
+      // --- Bonus: one pad per 8 waves from wave 12 (indices 12-21) ---
+      Vector2(300, 385),   // 12 above bottom horizontal, left
+      Vector2(500, 515),   // 13 below bottom horizontal, center-left
+      Vector2(600, 385),   // 14 above bottom horizontal, center
+      Vector2(700, 515),   // 15 below bottom horizontal, center-right
+      Vector2(400, 515),   // 16 below bottom horizontal, left-center
+      Vector2(800, 385),   // 17 above bottom horizontal, right-center
+      Vector2(350, 385),   // 18 above bottom horizontal, near left vertical
+      Vector2(650, 515),   // 19 below bottom horizontal, mid-right
+      Vector2(850, 385),   // 20 above bottom horizontal, far right
+      Vector2(550, 385),   // 21 above bottom horizontal, mid
     ],
     initialPadCount: 8,
     waves: _standardWaves,
