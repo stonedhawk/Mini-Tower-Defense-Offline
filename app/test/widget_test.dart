@@ -9,6 +9,6 @@ void main() {
 
     // Verify that our game home screen is visible.
     expect(find.text('Mini Tower Defense'), findsOneWidget);
-    expect(find.text('Start Run'), findsOneWidget);
+    expect(find.text('Select a Battlefield'), findsOneWidget);
   });
 }

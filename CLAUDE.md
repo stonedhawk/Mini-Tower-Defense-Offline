@@ -29,3 +29,17 @@ When you finish a milestone:
 - list commands run
 - list tests added or updated
 - list known gaps against the current milestone
+
+## Design and plan validation
+Before writing any code for a non-trivial feature:
+1. Draft the design in text (data model changes, affected files, data flow).
+2. Spawn a sub-agent using `subagent_type: "Plan"` and pass it the full design draft.
+   - Brief it as a senior Flutter/Flame developer doing a code review.
+   - Ask it to flag architecture issues, missing edge cases, and simpler alternatives.
+3. Incorporate its feedback before touching any source file.
+
+This applies whenever:
+- a new component or system is introduced
+- existing data models are changed
+- more than two files need to change in concert
+- a feature involves async, game-loop timing, or Flame lifecycle

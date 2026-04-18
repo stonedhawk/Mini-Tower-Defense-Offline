@@ -2,21 +2,27 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'components/hud_bridge.dart';
 import 'config/game_constants.dart';
-import 'config/path_points.dart';
-import 'config/build_pads.dart';
+import 'models/level_data.dart';
 import 'components/build_pad_component.dart';
 import 'components/tower_component.dart';
 import 'systems/wave_manager.dart';
 import 'package:flame/components.dart';
+import 'systems/debug_overlay.dart';
 
 class MiniTdGame extends FlameGame {
   final HudBridge hudBridge;
   final Function(bool win) onGameOver;
+  final LevelData levelData;
   late final WaveManager _waveManager;
+  double _elapsedTime = 0.0;
+  double get elapsedTime => _elapsedTime;
+
+  int _unlockedPadCount = 0;
 
   MiniTdGame({
     required this.hudBridge,
     required this.onGameOver,
+    required this.levelData,
   }) 
       : super(
           camera: CameraComponent.withFixedResolution(
@@ -28,38 +34,70 @@ class MiniTdGame extends FlameGame {
   }
 
   @override
+  void update(double dt) {
+    // Apply global speed multiplier
+    final scaledDt = dt * hudBridge.gameSpeed.value;
+    _elapsedTime += scaledDt;
+    super.update(scaledDt);
+  }
+
+  void toggleSpeed() {
+    hudBridge.gameSpeed.value = hudBridge.gameSpeed.value == 1.0 ? 2.0 : 1.0;
+  }
+
+  @override
   Future<void> onLoad() async {
     await super.onLoad();
     
-    // Add background (Placeholder simple green field)
+    // Add background based on level theme
     add(RectangleComponent(
       position: Vector2.zero(),
       size: Vector2(GameConstants.logicalWidth, GameConstants.logicalHeight),
-      paint: Paint()..color = const Color(0xFF2E7D32), // Dark Green
+      paint: Paint()..color = levelData.backgroundColor,
     ));
 
-    // Render path using a series of line segments
-    for (int i = 0; i < PathConfig.waypoints.length - 1; i++) {
-      final start = PathConfig.waypoints[i];
-      final end = PathConfig.waypoints[i + 1];
+    // Render path using segments from level waypoints
+    for (int i = 0; i < levelData.waypoints.length - 1; i++) {
+      final start = levelData.waypoints[i];
+      final end = levelData.waypoints[i + 1];
       add(PathSegmentComponent(start: start, end: end));
     }
 
-    // Render build pads
-    for (int i = 0; i < BuildPadConfig.padLocations.length; i++) {
+    // Render only the initial batch of build pads; more unlock as waves progress.
+    _unlockedPadCount = levelData.initialPadCount;
+    for (int i = 0; i < _unlockedPadCount; i++) {
       add(BuildPadComponent(
         padIndex: i,
-        position: BuildPadConfig.padLocations[i],
-        size: Vector2.all(BuildPadConfig.padSize),
+        position: levelData.buildPads[i],
+        size: Vector2.all(GameConstants.padSize),
       ));
     }
 
     // Initialize WaveManager
     _waveManager = WaveManager();
-    add(_waveManager);
+    await add(_waveManager);
     
     // Start game
     _waveManager.startNextWave();
+
+    // Add Debug Overlay (hidden by default)
+    add(DebugOverlay());
+  }
+
+
+  /// Reveals the next [count] build pads from the level's full pad list.
+  /// Called by WaveManager every 3 waves. Silently caps at the full list length.
+  void unlockNextPadBatch(int count) {
+    final start = _unlockedPadCount;
+    final end = (start + count).clamp(0, levelData.buildPads.length);
+    for (int i = start; i < end; i++) {
+      add(BuildPadComponent(
+        padIndex: i,
+        position: levelData.buildPads[i],
+        size: Vector2.all(GameConstants.padSize),
+      ));
+    }
+    _unlockedPadCount = end;
   }
 
   void triggerGameOver({required bool win}) {
@@ -78,6 +116,7 @@ class MiniTdGame extends FlameGame {
     if (towerType == 'Dart') cost = 40;
     if (towerType == 'Cannon') cost = 70;
     if (towerType == 'Frost') cost = 60;
+    if (towerType == 'Booster') cost = 100;
 
     if (hudBridge.gold.value >= cost && cost > 0) {
       final pad = children.whereType<BuildPadComponent>().firstWhere((p) => p.padIndex == padIndex);
@@ -93,6 +132,9 @@ class MiniTdGame extends FlameGame {
             break;
           case 'Frost':
             add(FrostTowerComponent(position: pad.position));
+            break;
+          case 'Booster':
+            add(BoosterTowerComponent(position: pad.position));
             break;
         }
         

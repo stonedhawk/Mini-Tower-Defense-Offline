@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../storage/save_service.dart';
 
 class ResultScreen extends StatefulWidget {
+  final int levelId;
   final bool didWin;
   final int waveReached;
 
   const ResultScreen({
     super.key,
+    required this.levelId,
     required this.didWin,
     required this.waveReached,
   });
@@ -20,7 +22,7 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    SaveService.saveBestWave(widget.waveReached);
+    SaveService.saveBestWave(widget.levelId, widget.waveReached);
   }
 
   @override
