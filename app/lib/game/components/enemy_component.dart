@@ -65,21 +65,19 @@ abstract class EnemyComponent extends PositionComponent with HasGameReference<Mi
     final target = game.levelData.waypoints[_currentWaypointIndex + 1];
     final toTarget = target - position;
     final dist = toTarget.length;
+    final step = baseSpeed * speedMultiplier * dt;
 
-    if (dist > 0.01) {
+    // Always check snap-and-advance FIRST so the enemy never freezes at a waypoint.
+    if (dist <= step) {
+      position = target.clone();
+      _currentWaypointIndex++;
+      if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) {
+        _leak();
+      }
+    } else if (dist > 0.001) {
       final dir = toTarget / dist;
       angle = math.atan2(dir.y, dir.x);
-      final step = baseSpeed * speedMultiplier * dt;
-
-      if (dist <= step) {
-        position = target.clone();
-        _currentWaypointIndex++;
-        if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) {
-          _leak();
-        }
-      } else {
-        position.add(dir * step);
-      }
+      position.add(dir * step);
     }
   }
 
