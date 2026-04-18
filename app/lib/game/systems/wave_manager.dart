@@ -8,6 +8,7 @@ class WaveManager extends Component with HasGameReference<MiniTdGame> {
   int currentSpawnIndex = 0;
   double _spawnTimer = 0;
   bool isSpawning = false;
+  bool _winTriggered = false;
 
   void startNextWave() {
     isSpawning = true;
@@ -47,7 +48,9 @@ class WaveManager extends Component with HasGameReference<MiniTdGame> {
 
         // Win condition — all defined waves cleared (skip if already in endless)
         if (currentWaveIndex >= game.levelData.waves.length &&
-            !game.hudBridge.isEndlessMode.value) {
+            !game.hudBridge.isEndlessMode.value &&
+            !_winTriggered) {
+          _winTriggered = true;
           game.triggerWin();
           return;
         }

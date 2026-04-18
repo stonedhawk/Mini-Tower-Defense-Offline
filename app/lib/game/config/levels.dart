@@ -12,6 +12,7 @@ class LevelRegistry {
   // ---------------------------------------------------------------------------
   // Level 1 — Green Lanes
   // Path: (0,150)→(300,150)→(300,500)→(900,500)→(900,200)→(1280,200)
+  // Pad offsets: 65px from nearest path segment so all tower types cover path.
   // ---------------------------------------------------------------------------
   static final LevelData level1 = LevelData(
     id: 1,
@@ -24,29 +25,28 @@ class LevelRegistry {
       Vector2(900, 200),
       Vector2(1280, 200),
     ],
-    // 12 pads total. First 8 start visible; 9–10 unlock after wave 3, 11–12 after wave 6.
     buildPads: [
       // --- Initial 8 ---
-      Vector2(150, 250),   // 0  left — covers first horizontal segment
-      Vector2(450, 400),   // 1  covers left vertical + start of bottom horizontal
-      Vector2(450, 620),   // 2  bottom-left corner
-      Vector2(600, 620),   // 3  center-bottom — ideal Booster spot
-      Vector2(750, 400),   // 4  covers bottom horizontal
-      Vector2(750, 620),   // 5  bottom-right corner
-      Vector2(1050, 100),  // 6  top-right — covers final horizontal exit
-      Vector2(1050, 330),  // 7  right side — covers right vertical segment
+      Vector2(150, 215),   // 0  below top-left horizontal (y=150)
+      Vector2(365, 325),   // 1  right of left vertical (x=300)
+      Vector2(450, 435),   // 2  above bottom horizontal (y=500), left
+      Vector2(600, 435),   // 3  above bottom horizontal, center — Booster ideal
+      Vector2(750, 435),   // 4  above bottom horizontal, right
+      Vector2(835, 350),   // 5  left of right vertical (x=900)
+      Vector2(1050, 265),  // 6  below exit horizontal (y=200)
+      Vector2(965, 350),   // 7  right of right vertical (x=900)
       // --- Wave-3 unlock (+2) ---
-      Vector2(150, 420),   // 8  second left pad — reaches x=300 vertical
-      Vector2(600, 380),   // 9  central — covers bottom horizontal from above
+      Vector2(235, 325),   // 8  left of left vertical (x=300)
+      Vector2(600, 565),   // 9  below bottom horizontal, center
       // --- Wave-6 unlock (+2) ---
-      Vector2(400, 260),   // 10 near first bend (300,150)
-      Vector2(1150, 100),  // 11 far right on exit horizontal
+      Vector2(150, 85),    // 10 above top-left horizontal (y=150)
+      Vector2(1150, 265),  // 11 below exit horizontal, far right
     ],
     initialPadCount: 8,
     waves: _standardWaves,
     backgroundColor: const Color(0xFF2E7D32),
     difficultyMultiplier: 1.0,
-    maxTowerLevel: 2,
+    maxTowerLevel: 10,
   );
 
   // ---------------------------------------------------------------------------
@@ -66,29 +66,28 @@ class LevelRegistry {
       Vector2(1000, 200),
       Vector2(1280, 200),
     ],
-    // 12 pads total. First 8 start visible; 9–10 unlock after wave 3, 11–12 after wave 6.
     buildPads: [
       // --- Initial 8 ---
-      Vector2(100, 400),   // 0  near entry horizontal (y=500)
-      Vector2(300, 300),   // 1  between x=200 and x=600 verticals
-      Vector2(500, 100),   // 2  above first U-bend top
-      Vector2(700, 300),   // 3  between x=600 and x=1000 verticals
-      Vector2(900, 100),   // 4  above second U-bend top
-      Vector2(1100, 400),  // 5  near exit horizontal
-      Vector2(500, 600),   // 6  below bottom horizontal, left
-      Vector2(700, 600),   // 7  below bottom horizontal, right
+      Vector2(100, 435),   // 0  above entry horizontal (y=500)
+      Vector2(265, 350),   // 1  right of left vertical (x=200)
+      Vector2(400, 265),   // 2  below left top horizontal (y=200)
+      Vector2(535, 350),   // 3  left of center vertical (x=600)
+      Vector2(800, 435),   // 4  above middle horizontal (y=500)
+      Vector2(1065, 350),  // 5  right of right vertical (x=1000)
+      Vector2(400, 135),   // 6  above left top horizontal (y=200)
+      Vector2(1150, 265),  // 7  below exit horizontal (y=200)
       // --- Wave-3 unlock (+2) ---
-      Vector2(150, 300),   // 8  attacks x=200 left vertical
-      Vector2(850, 300),   // 9  attacks x=1000 right vertical
+      Vector2(135, 350),   // 8  left of left vertical (x=200)
+      Vector2(935, 350),   // 9  left of right vertical (x=1000)
       // --- Wave-6 unlock (+2) ---
-      Vector2(400, 400),   // 10 covers multiple horizontal segments
-      Vector2(1150, 100),  // 11 top-right near exit
+      Vector2(665, 350),   // 10 right of center vertical (x=600)
+      Vector2(1150, 135),  // 11 above exit horizontal (y=200)
     ],
     initialPadCount: 8,
     waves: _standardWaves,
     backgroundColor: const Color(0xFF8D6E63),
     difficultyMultiplier: 1.25,
-    maxTowerLevel: 3,
+    maxTowerLevel: 10,
   );
 
   // ---------------------------------------------------------------------------
@@ -99,36 +98,35 @@ class LevelRegistry {
     id: 3,
     name: 'Ice Gorge',
     waypoints: [
-      Vector2(640, 0),    // Spawn top middle
-      Vector2(640, 150),  // Top bend
-      Vector2(200, 150),  // Left horizontal
-      Vector2(200, 450),  // Left vertical down
-      Vector2(1080, 450), // Right horizontal
-      Vector2(1080, 720), // Exit bottom right
+      Vector2(640, 0),
+      Vector2(640, 150),
+      Vector2(200, 150),
+      Vector2(200, 450),
+      Vector2(1080, 450),
+      Vector2(1080, 720),
     ],
-    // 12 pads total. First 8 start visible; 9–10 unlock after wave 3, 11–12 after wave 6.
     buildPads: [
       // --- Initial 8 ---
-      Vector2(400, 100),   // 0  left of spawn vertical
-      Vector2(800, 100),   // 1  right of spawn vertical
-      Vector2(100, 300),   // 2  left of x=200 vertical
-      Vector2(1180, 300),  // 3  right of x=1080 vertical
-      Vector2(400, 380),   // 4  above bottom horizontal (y=450)
-      Vector2(800, 380),   // 5  above bottom horizontal (y=450)
-      Vector2(640, 580),   // 6  below exit area
-      Vector2(200, 580),   // 7  near x=200 vertical bottom
+      Vector2(575, 75),    // 0  left of spawn vertical (x=640)
+      Vector2(705, 75),    // 1  right of spawn vertical (x=640)
+      Vector2(135, 300),   // 2  left of left vertical (x=200)
+      Vector2(1015, 580),  // 3  left of exit vertical (x=1080)
+      Vector2(400, 385),   // 4  above bottom horizontal (y=450)
+      Vector2(750, 385),   // 5  above bottom horizontal (y=450)
+      Vector2(640, 515),   // 6  below bottom horizontal (y=450)
+      Vector2(265, 300),   // 7  right of left vertical (x=200)
       // --- Wave-3 unlock (+2) ---
-      Vector2(500, 270),   // 8  between the two horizontals, left-center
-      Vector2(800, 560),   // 9  below bottom horizontal, right side
+      Vector2(420, 215),   // 8  below top horizontal (y=150)
+      Vector2(900, 515),   // 9  below bottom horizontal, right section
       // --- Wave-6 unlock (+2) ---
-      Vector2(350, 560),   // 10 below bottom horizontal, left side
-      Vector2(950, 320),   // 11 above x=1080 vertical approach
+      Vector2(265, 215),   // 10 inside corner: right of x=200 + below y=150
+      Vector2(950, 385),   // 11 above bottom horizontal, near exit vertical
     ],
     initialPadCount: 8,
     waves: _standardWaves,
     backgroundColor: const Color(0xFF01579B),
     difficultyMultiplier: 1.56,
-    maxTowerLevel: 4,
+    maxTowerLevel: 10,
   );
 
   // ---------------------------------------------------------------------------

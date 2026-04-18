@@ -1,9 +1,11 @@
+import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import '../mini_td_game.dart';
 import '../systems/sound_service.dart';
 import 'death_effect.dart';
+import 'damage_number_component.dart';
 
 abstract class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame> {
   int hp;
@@ -16,7 +18,6 @@ abstract class EnemyComponent extends PositionComponent with HasGameReference<Mi
   double _slowTimer = 0.0;
   int _currentWaypointIndex = 0;
 
-  // Drives the sprite sheet playback (Flame 1.17+: SpriteAnimation is stateless)
   SpriteAnimationTicker? _animTicker;
 
   EnemyComponent({
@@ -28,20 +29,16 @@ abstract class EnemyComponent extends PositionComponent with HasGameReference<Mi
   })  : hp = (hp * statMultiplier).toInt(),
         maxHp = (hp * statMultiplier).toInt(),
         baseSpeed = (baseSpeed * statMultiplier.clamp(1.0, 1.5)),
-        super(size: Vector2(24, 24), anchor: Anchor.center);
+        super(size: Vector2(40, 40), anchor: Anchor.center);
 
-  /// Each subclass provides the sprite sheet asset path.
   String get spritePath;
 
-  /// Override per subclass for kill-burst colour.
   Color get deathColor => const Color(0xFFFFEB3B);
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    // game is only available after mount — cannot access it in the constructor
     position = game.levelData.waypoints[0].clone();
-
     final animation = await game.loadSpriteAnimation(
       spritePath,
       SpriteAnimationData.sequenced(
@@ -66,17 +63,23 @@ abstract class EnemyComponent extends PositionComponent with HasGameReference<Mi
     }
 
     final target = game.levelData.waypoints[_currentWaypointIndex + 1];
-    final dir = (target - position)..normalize();
-    final step = baseSpeed * speedMultiplier * dt;
+    final toTarget = target - position;
+    final dist = toTarget.length;
 
-    if (position.distanceTo(target) <= step) {
-      position = target.clone();
-      _currentWaypointIndex++;
-      if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) {
-        _leak();
+    if (dist > 0.01) {
+      final dir = toTarget / dist;
+      angle = math.atan2(dir.y, dir.x);
+      final step = baseSpeed * speedMultiplier * dt;
+
+      if (dist <= step) {
+        position = target.clone();
+        _currentWaypointIndex++;
+        if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) {
+          _leak();
+        }
+      } else {
+        position.add(dir * step);
       }
-    } else {
-      position.add(dir * step);
     }
   }
 
@@ -105,6 +108,7 @@ abstract class EnemyComponent extends PositionComponent with HasGameReference<Mi
 
   void takeDamage(int amount) {
     hp -= amount;
+    game.add(DamageNumberComponent(position: position.clone(), amount: amount));
     if (hp <= 0) {
       SoundService.instance.playHit();
       game.hudBridge.gold.value += goldReward;
@@ -117,19 +121,19 @@ abstract class EnemyComponent extends PositionComponent with HasGameReference<Mi
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // 1. Sprite (current animation frame fills the component bounds)
+    // 1. Sprite
     _animTicker?.currentFrame.sprite.render(canvas, size: size);
 
-    // 2. Frost tint overlay when slowed
+    // 2. Frost tint when slowed
     if (speedMultiplier < 1.0) {
       final frostPaint = Paint()..color = const Color(0xFF81D4FA).withValues(alpha: 0.4);
       canvas.drawRect(size.toRect(), frostPaint);
     }
 
-    // 3. HP bar above the sprite
+    // 3. HP bar (7px tall, snug above sprite)
     final hpRatio = (hp / maxHp).clamp(0.0, 1.0);
-    final bgRect = Rect.fromLTWH(0, -6, size.x, 4);
-    final fgRect = Rect.fromLTWH(0, -6, size.x * hpRatio, 4);
+    final bgRect = Rect.fromLTWH(0, -8, size.x, 7);
+    final fgRect = Rect.fromLTWH(0, -8, size.x * hpRatio, 7);
     canvas.drawRect(bgRect, Paint()..color = const Color(0xFFFF0000));
     canvas.drawRect(fgRect, Paint()..color = const Color(0xFF00FF00));
   }
@@ -149,7 +153,7 @@ class ScoutEnemy extends EnemyComponent {
 class TankEnemy extends EnemyComponent {
   TankEnemy({super.statMultiplier = 1.0})
       : super(hp: 48, baseSpeed: 24, goldReward: 16, leakDamage: 1) {
-    size = Vector2(32, 32);
+    size = Vector2(60, 60);
   }
 
   @override
@@ -162,7 +166,7 @@ class TankEnemy extends EnemyComponent {
 class SwarmEnemy extends EnemyComponent {
   SwarmEnemy({super.statMultiplier = 1.0})
       : super(hp: 10, baseSpeed: 55, goldReward: 5, leakDamage: 1) {
-    size = Vector2(16, 16);
+    size = Vector2(28, 28);
   }
 
   @override
