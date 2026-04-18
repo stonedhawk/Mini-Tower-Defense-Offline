@@ -12,6 +12,10 @@ class HudBridge {
   final ValueNotifier<double> gameSpeed = ValueNotifier(1.0);
   final ValueNotifier<int?> selectedTowerId = ValueNotifier(null);
   final ValueNotifier<String?> selectedBuildType = ValueNotifier(null);
+  /// True while the "You Win!" overlay is visible between wave 10 and endless mode.
+  final ValueNotifier<bool> showWinOverlay = ValueNotifier(false);
+  /// Flips to true once the player chooses Keep Going — drives wave counter display.
+  final ValueNotifier<bool> isEndlessMode = ValueNotifier(false);
 
   void reset() {
     gold.value = GameConstants.startingGold;
@@ -20,5 +24,7 @@ class HudBridge {
     selectedPadIndex.value = null;
     selectedTowerPosition.value = null;
     selectedBuildType.value = null;
+    showWinOverlay.value = false;
+    isEndlessMode.value = false;
   }
 }

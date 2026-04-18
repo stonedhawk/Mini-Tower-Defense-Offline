@@ -6,6 +6,7 @@ import 'models/level_data.dart';
 import 'components/build_pad_component.dart';
 import 'components/tower_component.dart';
 import 'systems/wave_manager.dart';
+import 'systems/sound_service.dart';
 import 'package:flame/components.dart';
 import 'systems/debug_overlay.dart';
 
@@ -100,8 +101,25 @@ class MiniTdGame extends FlameGame {
     _unlockedPadCount = end;
   }
 
+  /// Called by WaveManager when all 10 defined waves are cleared.
+  /// Pauses the engine and shows the in-game win overlay so the player can
+  /// choose "Keep Going?" (endless) or "End Run" (result screen).
+  void triggerWin() {
+    pauseEngine();
+    SoundService.instance.playWin();
+    hudBridge.showWinOverlay.value = true;
+  }
+
+  /// Player tapped "Keep Going?" — resume from wave 11+ in endless mode.
+  void resumeEndless() {
+    hudBridge.showWinOverlay.value = false;
+    hudBridge.isEndlessMode.value = true;
+    resumeEngine();
+  }
+
   void triggerGameOver({required bool win}) {
-    pauseEngine(); // Stop updates
+    pauseEngine();
+    if (!win) SoundService.instance.playLose();
     onGameOver(win);
   }
 

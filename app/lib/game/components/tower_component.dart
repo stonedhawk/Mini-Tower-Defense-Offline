@@ -3,6 +3,7 @@ import 'package:flame/events.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../mini_td_game.dart';
+import '../systems/sound_service.dart';
 import 'enemy_component.dart';
 import 'projectile_component.dart';
 
@@ -102,6 +103,7 @@ abstract class TowerComponent extends PositionComponent with HasGameReference<Mi
     }
   }
   void _fireProjectile(EnemyComponent target) {
+    SoundService.instance.playShoot();
     bool isFrost = this is FrostTowerComponent;
     double splashRadius = this is CannonTowerComponent ? 32.0 : 0.0;
 
