@@ -30,6 +30,7 @@ flutter test
 
 ## Implementation behavior
 - Implement one milestone at a time
+- Always update `CHANGELOG.md` with every milestone completion or significant feature addition
 - Prefer pure functions for game rules so they are easy to test
 - Keep platform-specific code to a minimum
 - Use current stable Flutter defaults unless the docs explicitly say otherwise

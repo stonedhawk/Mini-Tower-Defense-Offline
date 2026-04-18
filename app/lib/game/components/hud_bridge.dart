@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flame/components.dart';
 import '../config/game_constants.dart';
 
 /// A simple state bridge between the Flame game and the Flutter HUD overlays.
@@ -7,11 +8,17 @@ class HudBridge {
   final ValueNotifier<int> lives = ValueNotifier(GameConstants.startingLives);
   final ValueNotifier<int> wave = ValueNotifier(GameConstants.startingWave);
   final ValueNotifier<int?> selectedPadIndex = ValueNotifier(null);
+  final ValueNotifier<Vector2?> selectedTowerPosition = ValueNotifier(null);
+  final ValueNotifier<double> gameSpeed = ValueNotifier(1.0);
+  final ValueNotifier<int?> selectedTowerId = ValueNotifier(null);
+  final ValueNotifier<String?> selectedBuildType = ValueNotifier(null);
 
   void reset() {
     gold.value = GameConstants.startingGold;
     lives.value = GameConstants.startingLives;
     wave.value = GameConstants.startingWave;
     selectedPadIndex.value = null;
+    selectedTowerPosition.value = null;
+    selectedBuildType.value = null;
   }
 }

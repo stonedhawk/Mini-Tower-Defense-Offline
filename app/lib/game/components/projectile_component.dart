@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'enemy_component.dart';
+import 'impact_effect.dart';
 import '../mini_td_game.dart';
 
 class ProjectileComponent extends PositionComponent with HasGameReference<MiniTdGame> {
@@ -42,13 +43,28 @@ class ProjectileComponent extends PositionComponent with HasGameReference<MiniTd
   }
 
   void _impact() {
+    // Visual hit effect
+    if (isFrost) {
+      game.add(ImpactEffect(
+        position: position.clone(),
+        radius: 20,
+        color: const Color(0xFF81D4FA),
+      ));
+    } else if (splashRadius > 0) {
+      game.add(ImpactEffect(
+        position: position.clone(),
+        radius: splashRadius,
+        color: const Color(0xFF546E7A),
+        duration: 0.3,
+      ));
+    }
+
     if (splashRadius > 0) {
       // Area of Effect Support
       for (final component in game.children) {
         if (component is EnemyComponent) {
           if (component.position.distanceTo(position) <= splashRadius) {
             component.takeDamage(damage);
-            // Splashes don't slow enemies based on the MVP PRD, but we can hook it here if needed
           }
         }
       }
@@ -63,6 +79,7 @@ class ProjectileComponent extends PositionComponent with HasGameReference<MiniTd
     }
     removeFromParent();
   }
+
 
   @override
   void render(Canvas canvas) {
