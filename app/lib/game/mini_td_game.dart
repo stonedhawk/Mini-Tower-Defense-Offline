@@ -127,39 +127,41 @@ class MiniTdGame extends FlameGame {
     hudBridge.selectedPadIndex.value = index;
   }
 
-  void buildTower(int padIndex, String towerType) {
-    if (hudBridge.gold.value <= 0) return;
-
+  // Returns false when the player can't afford the tower (caller shows feedback).
+  bool buildTower(int padIndex, String towerType) {
     int cost = 0;
     if (towerType == 'Dart') cost = 40;
     if (towerType == 'Cannon') cost = 70;
     if (towerType == 'Frost') cost = 60;
-    if (towerType == 'Booster') cost = 100;
+    if (towerType == 'Booster') cost = 70;
 
-    if (hudBridge.gold.value >= cost && cost > 0) {
-      final pad = children.whereType<BuildPadComponent>().firstWhere((p) => p.padIndex == padIndex);
-      if (!pad.isOccupied) {
-        hudBridge.gold.value -= cost;
-        
-        switch (towerType) {
-          case 'Dart':
-            add(DartTowerComponent(position: pad.position));
-            break;
-          case 'Cannon':
-            add(CannonTowerComponent(position: pad.position));
-            break;
-          case 'Frost':
-            add(FrostTowerComponent(position: pad.position));
-            break;
-          case 'Booster':
-            add(BoosterTowerComponent(position: pad.position));
-            break;
-        }
-        
-        pad.isOccupied = true;
-      }
+    hudBridge.selectedPadIndex.value = null;
+
+    if (cost == 0) return false;
+    if (hudBridge.gold.value < cost) return false;
+
+    final matching = children.whereType<BuildPadComponent>().where((p) => p.padIndex == padIndex);
+    if (matching.isEmpty) return false;
+    final pad = matching.first;
+    if (pad.isOccupied) return false;
+
+    hudBridge.gold.value -= cost;
+    switch (towerType) {
+      case 'Dart':
+        add(DartTowerComponent(position: pad.position));
+        break;
+      case 'Cannon':
+        add(CannonTowerComponent(position: pad.position));
+        break;
+      case 'Frost':
+        add(FrostTowerComponent(position: pad.position));
+        break;
+      case 'Booster':
+        add(BoosterTowerComponent(position: pad.position));
+        break;
     }
-    hudBridge.selectedPadIndex.value = null; // dismiss UI
+    pad.isOccupied = true;
+    return true;
   }
 }
 

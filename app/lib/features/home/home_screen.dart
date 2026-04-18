@@ -144,14 +144,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: const TextStyle(fontSize: 16, color: Colors.amber),
                       ),
                       const SizedBox(height: 20),
-                      Row(
+                      const Row(
                         children: [
-                          const Text(
+                          Text(
                             'START MISSION',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.blueAccent),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_ios, size: 12, color: Colors.blueAccent),
                         ],
                       ),
                     ],
@@ -178,6 +178,16 @@ class _GameScreenState extends State<GameScreen> {
   late final HudBridge _hudBridge;
   late final MiniTdGame _game;
 
+  void _showNotEnoughGold() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Not enough gold!'),
+        duration: Duration(seconds: 1),
+        backgroundColor: Color(0xFF795548),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -192,6 +202,7 @@ class _GameScreenState extends State<GameScreen> {
               levelId: widget.level.id,
               didWin: win,
               waveReached: _hudBridge.wave.value,
+              isEndlessMode: _hudBridge.isEndlessMode.value,
             ),
           ),
         );
@@ -201,11 +212,15 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Stack(
         children: [
+          // ── Game canvas ────────────────────────────────────────────
           GameWidget(game: _game),
-          // Existing HUD Row
+
+          // ── HUD row ───────────────────────────────────────────────
           Positioned(
             top: 20,
             left: 20,
@@ -238,7 +253,6 @@ class _GameScreenState extends State<GameScreen> {
                     style: const TextStyle(fontSize: 24, color: Colors.redAccent, fontWeight: FontWeight.bold),
                   ),
                 ),
-                // Speed toggle button
                 IconButton(
                   icon: ValueListenableBuilder<double>(
                     valueListenable: _hudBridge.gameSpeed,
@@ -253,7 +267,8 @@ class _GameScreenState extends State<GameScreen> {
               ],
             ),
           ),
-          // Version overlay (bottom right) - Double tap for Debug Mode
+
+          // ── Version overlay / debug toggle ────────────────────────
           Positioned(
             bottom: 8,
             right: 8,
@@ -267,13 +282,14 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 );
               },
-              child: Text(
+              child: const Text(
                 'v1.0.0.0',
-                style: const TextStyle(fontSize: 12, color: Colors.white70, decoration: TextDecoration.underline),
+                style: TextStyle(fontSize: 12, color: Colors.white70, decoration: TextDecoration.underline),
               ),
             ),
           ),
-          // Win overlay — shown after all waves cleared, before endless or exit
+
+          // ── Win overlay ───────────────────────────────────────────
           ValueListenableBuilder<bool>(
             valueListenable: _hudBridge.showWinOverlay,
             builder: (context, show, child) {
@@ -336,12 +352,35 @@ class _GameScreenState extends State<GameScreen> {
             },
           ),
 
-          // Tower tooltip overlay (Floating near selected tower)
+          // ── Transparent dismiss barrier (tap outside any overlay) ──
+          // Sits above game, below the overlays. Tapping it closes open menus.
+          ValueListenableBuilder<int?>(
+            valueListenable: _hudBridge.selectedPadIndex,
+            builder: (context, padIdx, _) => ValueListenableBuilder<int?>(
+              valueListenable: _hudBridge.selectedTowerId,
+              builder: (context, towerId, _) {
+                final anyOpen = padIdx != null || towerId != null;
+                if (!anyOpen) return const SizedBox.shrink();
+                return Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () {
+                      _hudBridge.selectedPadIndex.value = null;
+                      _hudBridge.selectedTowerId.value = null;
+                      _hudBridge.selectedTowerPosition.value = null;
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // ── Tower tooltip ─────────────────────────────────────────
           ValueListenableBuilder<int?>(
             valueListenable: _hudBridge.selectedTowerId,
             builder: (context, towerId, child) {
               if (towerId == null) return const SizedBox.shrink();
-              
+
               final towers = _game.children.whereType<TowerComponent>().where((t) => t.hashCode == towerId);
               if (towers.isEmpty) return const SizedBox.shrink();
               final tower = towers.first;
@@ -350,77 +389,101 @@ class _GameScreenState extends State<GameScreen> {
                 valueListenable: _hudBridge.selectedTowerPosition,
                 builder: (context, pos, child) {
                   if (pos == null) return const SizedBox.shrink();
-                  
-                  // Position the tooltip near the tower
+
+                  // Map game-logical coords to screen coords (1280×720 logical viewport).
+                  final scaleX = screenSize.width / 1280;
+                  final scaleY = screenSize.height / 720;
+                  const tooltipW = 200.0;
+                  const tooltipH = 200.0;
+                  final rawLeft = pos.x * scaleX - tooltipW / 2;
+                  final rawTop = pos.y * scaleY - tooltipH - 20;
+                  final left = rawLeft.clamp(8.0, screenSize.width - tooltipW - 8);
+                  final top = rawTop.clamp(8.0, screenSize.height - tooltipH - 8);
+
                   return Positioned(
-                    left: pos.x - 100, // Center roughly
-                    top: pos.y - 160,  // Above the tower
-                    child: Container(
-                      width: 200,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black54,
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                           Text(
-                            tower is DartTowerComponent ? 'Dart Tower' :
-                            tower is CannonTowerComponent ? 'Cannon' :
-                            tower is FrostTowerComponent ? 'Frost Tower' : 'Booster Tower',
-                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const Divider(color: Colors.white24),
-                          Text('Level: ${tower.level}', style: const TextStyle(color: Colors.white70)),
-                          if (tower is! BoosterTowerComponent) ...[
-                            Text('Damage: ${tower.damage}', style: const TextStyle(color: Colors.white70)),
-                            Text('Range: ${tower.attackRange.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white70)),
-                          ] else ...[
-                            Text('Buff: Attack Speed +25%', style: const TextStyle(color: Colors.orange)),
-                            Text('Range: ${tower.attackRange.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white70)),
-                          ],
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: tower.canUpgrade
-                                    ? Colors.amber
-                                    : Colors.grey.shade700,
-                                foregroundColor: Colors.black,
-                              ),
-                              onPressed: tower.canUpgrade
-                                  ? () {
-                                      tower.upgrade();
-                                      _hudBridge.selectedTowerId.value = null;
-                                      _hudBridge.selectedTowerPosition.value =
-                                          null;
-                                    }
-                                  : null,
-                              child: Text(
-                                tower.canUpgrade
-                                    ? 'Upgrade (${tower.upgradeCost}G)'
-                                    : 'MAX LEVEL',
-                              ),
+                    left: left,
+                    top: top,
+                    child: GestureDetector(
+                      // Absorb taps so they don't propagate to the dismiss barrier.
+                      onTap: () {},
+                      child: Container(
+                        width: tooltipW,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black54,
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              _hudBridge.selectedTowerId.value = null;
-                              _hudBridge.selectedTowerPosition.value = null;
-                            },
-                            child: const Text('Close', style: TextStyle(color: Colors.white54)),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              tower is DartTowerComponent ? 'Dart Tower' :
+                              tower is CannonTowerComponent ? 'Cannon' :
+                              tower is FrostTowerComponent ? 'Frost Tower' : 'Booster Tower',
+                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const Divider(color: Colors.white24),
+                            Text('Level: ${tower.level}', style: const TextStyle(color: Colors.white70)),
+                            if (tower is! BoosterTowerComponent) ...[
+                              Text('Damage: ${tower.damage}', style: const TextStyle(color: Colors.white70)),
+                              Text('Range: ${tower.attackRange.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white70)),
+                            ] else ...[
+                              const Text('Buff: Attack Speed +25%', style: TextStyle(color: Colors.orange)),
+                              Text('Range: ${tower.attackRange.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white70)),
+                            ],
+                            const SizedBox(height: 12),
+                            ValueListenableBuilder<int>(
+                              valueListenable: _hudBridge.gold,
+                              builder: (context, gold, _) {
+                                final canAfford = gold >= tower.upgradeCost;
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: !tower.canUpgrade
+                                          ? Colors.grey.shade700
+                                          : canAfford
+                                              ? Colors.amber
+                                              : Colors.red.shade800,
+                                      foregroundColor: Colors.black,
+                                    ),
+                                    onPressed: tower.canUpgrade
+                                        ? () {
+                                            final success = tower.upgrade();
+                                            if (!success) {
+                                              _showNotEnoughGold();
+                                            } else {
+                                              _hudBridge.selectedTowerId.value = null;
+                                              _hudBridge.selectedTowerPosition.value = null;
+                                            }
+                                          }
+                                        : null,
+                                    child: Text(
+                                      tower.canUpgrade
+                                          ? 'Upgrade (${tower.upgradeCost}G)'
+                                          : 'MAX LEVEL',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _hudBridge.selectedTowerId.value = null;
+                                _hudBridge.selectedTowerPosition.value = null;
+                              },
+                              child: const Text('Close', style: TextStyle(color: Colors.white54)),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -429,7 +492,7 @@ class _GameScreenState extends State<GameScreen> {
             },
           ),
 
-          // Pause/Back buttons
+          // ── Close / back button ───────────────────────────────────
           Positioned(
             top: 60,
             right: 20,
@@ -438,7 +501,8 @@ class _GameScreenState extends State<GameScreen> {
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
-          // Tower Selection Overlay
+
+          // ── Tower selection menu ──────────────────────────────────
           ValueListenableBuilder<int?>(
             valueListenable: _hudBridge.selectedPadIndex,
             builder: (context, padIndex, child) {
@@ -449,29 +513,33 @@ class _GameScreenState extends State<GameScreen> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildTowerButton('Dart', 40, Colors.grey, padIndex),
-                        const SizedBox(width: 8),
-                        _buildTowerButton('Cannon', 70, Colors.blueGrey, padIndex),
-                        const SizedBox(width: 8),
-                        _buildTowerButton('Frost', 60, Colors.lightBlue, padIndex),
-                        const SizedBox(width: 8),
-                        _buildTowerButton('Booster', 100, Colors.orange, padIndex),
-                        const SizedBox(width: 16),
-                        IconButton(
-                          icon: const Icon(Icons.cancel, color: Colors.redAccent),
-                          onPressed: () => _hudBridge.selectedPadIndex.value = null,
-                        )
-                      ],
+                  child: GestureDetector(
+                    // Absorb taps on the menu itself so they don't hit the dismiss barrier.
+                    onTap: () {},
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildTowerButton('Dart', 40, Colors.grey, padIndex),
+                          const SizedBox(width: 8),
+                          _buildTowerButton('Cannon', 70, Colors.blueGrey, padIndex),
+                          const SizedBox(width: 8),
+                          _buildTowerButton('Frost', 60, Colors.lightBlue, padIndex),
+                          const SizedBox(width: 8),
+                          _buildTowerButton('Booster', 70, Colors.orange, padIndex),
+                          const SizedBox(width: 16),
+                          IconButton(
+                            icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                            onPressed: () => _hudBridge.selectedPadIndex.value = null,
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -485,7 +553,10 @@ class _GameScreenState extends State<GameScreen> {
 
   Widget _buildTowerButton(String type, int cost, Color color, int padIndex) {
     return ElevatedButton(
-      onPressed: () => _game.buildTower(padIndex, type),
+      onPressed: () {
+        final success = _game.buildTower(padIndex, type);
+        if (!success) _showNotEnoughGold();
+      },
       style: ElevatedButton.styleFrom(backgroundColor: color),
       child: Column(
         mainAxisSize: MainAxisSize.min,
