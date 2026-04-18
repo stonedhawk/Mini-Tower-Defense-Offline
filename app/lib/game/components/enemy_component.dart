@@ -1,20 +1,23 @@
 import 'package:flame/components.dart';
+import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import '../mini_td_game.dart';
 import '../systems/sound_service.dart';
 import 'death_effect.dart';
 
-class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame> {
+abstract class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame> {
   int hp;
   final int maxHp;
   final double baseSpeed;
   final int goldReward;
   final int leakDamage;
-  
+
   double speedMultiplier = 1.0;
   double _slowTimer = 0.0;
-  
   int _currentWaypointIndex = 0;
+
+  // Drives the sprite sheet playback (Flame 1.17+: SpriteAnimation is stateless)
+  SpriteAnimationTicker? _animTicker;
 
   EnemyComponent({
     required int hp,
@@ -22,32 +25,44 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
     required this.goldReward,
     required this.leakDamage,
     double statMultiplier = 1.0,
-  }) : hp = (hp * statMultiplier).toInt(),
-       maxHp = (hp * statMultiplier).toInt(),
-       baseSpeed = (baseSpeed * statMultiplier.clamp(1.0, 1.5)),
-       super(size: Vector2(24, 24), anchor: Anchor.center);
+  })  : hp = (hp * statMultiplier).toInt(),
+        maxHp = (hp * statMultiplier).toInt(),
+        baseSpeed = (baseSpeed * statMultiplier.clamp(1.0, 1.5)),
+        super(size: Vector2(24, 24), anchor: Anchor.center);
+
+  /// Each subclass provides the sprite sheet asset path.
+  String get spritePath;
+
+  /// Override per subclass for kill-burst colour.
+  Color get deathColor => const Color(0xFFFFEB3B);
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
     // game is only available after mount — cannot access it in the constructor
     position = game.levelData.waypoints[0].clone();
-  }
 
+    final animation = await game.loadSpriteAnimation(
+      spritePath,
+      SpriteAnimationData.sequenced(
+        amount: 8,
+        stepTime: 0.1,
+        textureSize: Vector2(128, 128),
+      ),
+    );
+    _animTicker = SpriteAnimationTicker(animation);
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
-    
-    if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) {
-      return;
-    }
+    _animTicker?.update(dt);
+
+    if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) return;
 
     if (_slowTimer > 0) {
       _slowTimer -= dt;
-      if (_slowTimer <= 0) {
-        speedMultiplier = 1.0;
-      }
+      if (_slowTimer <= 0) speedMultiplier = 1.0;
     }
 
     final target = game.levelData.waypoints[_currentWaypointIndex + 1];
@@ -57,7 +72,6 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
     if (position.distanceTo(target) <= step) {
       position = target.clone();
       _currentWaypointIndex++;
-      
       if (_currentWaypointIndex >= game.levelData.waypoints.length - 1) {
         _leak();
       }
@@ -85,14 +99,9 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
   void _leak() {
     SoundService.instance.playLeak();
     game.hudBridge.lives.value -= leakDamage;
-    if (game.hudBridge.lives.value < 0) {
-      game.hudBridge.lives.value = 0;
-    }
+    if (game.hudBridge.lives.value < 0) game.hudBridge.lives.value = 0;
     removeFromParent();
   }
-
-  /// Override in subclasses to choose the kill-burst colour.
-  Color get deathColor => const Color(0xFFFFEB3B);
 
   void takeDamage(int amount) {
     hp -= amount;
@@ -107,86 +116,58 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    
-    // 1. Unique Shape Drawing (to be overridden by subclasses)
-    drawEnemyShape(canvas);
 
-    // 2. Frost tint if slowed (Common logic)
+    // 1. Sprite (current animation frame fills the component bounds)
+    _animTicker?.currentFrame.sprite.render(canvas, size: size);
+
+    // 2. Frost tint overlay when slowed
     if (speedMultiplier < 1.0) {
-        final frostPaint = Paint()..color = const Color(0xFF81D4FA).withValues(alpha: 0.4);
-        canvas.drawRect(size.toRect(), frostPaint);
+      final frostPaint = Paint()..color = const Color(0xFF81D4FA).withValues(alpha: 0.4);
+      canvas.drawRect(size.toRect(), frostPaint);
     }
 
-    // 3. HP Bar (Common logic)
-    final barWidth = size.x;
-    final barHeight = 4.0;
+    // 3. HP bar above the sprite
     final hpRatio = (hp / maxHp).clamp(0.0, 1.0);
-    final bgRect = Rect.fromLTWH(0, -6, barWidth, barHeight);
-    final fgRect = Rect.fromLTWH(0, -6, barWidth * hpRatio, barHeight);
-    final bgPaint = Paint()..color = const Color(0xFFFF0000);
-    final fgPaint = Paint()..color = const Color(0xFF00FF00);
-    canvas.drawRect(bgRect, bgPaint);
-    canvas.drawRect(fgRect, fgPaint);
+    final bgRect = Rect.fromLTWH(0, -6, size.x, 4);
+    final fgRect = Rect.fromLTWH(0, -6, size.x * hpRatio, 4);
+    canvas.drawRect(bgRect, Paint()..color = const Color(0xFFFF0000));
+    canvas.drawRect(fgRect, Paint()..color = const Color(0xFF00FF00));
   }
-
-  /// Subclasses should override this to draw their specific look
-  void drawEnemyShape(Canvas canvas) {}
 }
 
 class ScoutEnemy extends EnemyComponent {
-  ScoutEnemy({super.statMultiplier = 1.0}) : super(
-    hp: 18,
-    baseSpeed: 42,
-    goldReward: 8,
-    leakDamage: 1,
-  );
+  ScoutEnemy({super.statMultiplier = 1.0})
+      : super(hp: 18, baseSpeed: 42, goldReward: 8, leakDamage: 1);
 
   @override
-  Color get deathColor => const Color(0xFFF44336); // red burst
+  String get spritePath => 'sprites/enemy_scout.png';
 
   @override
-  void drawEnemyShape(Canvas canvas) {
-    final paint = Paint()..color = const Color(0xFFF44336);
-    canvas.drawCircle((size / 2).toOffset(), size.x / 2, paint);
-  }
+  Color get deathColor => const Color(0xFFF44336);
 }
 
 class TankEnemy extends EnemyComponent {
-  TankEnemy({super.statMultiplier = 1.0}) : super(
-    hp: 48,
-    baseSpeed: 24,
-    goldReward: 16,
-    leakDamage: 1,
-  ) {
+  TankEnemy({super.statMultiplier = 1.0})
+      : super(hp: 48, baseSpeed: 24, goldReward: 16, leakDamage: 1) {
     size = Vector2(32, 32);
   }
 
   @override
-  Color get deathColor => const Color(0xFFE65100); // orange burst
+  String get spritePath => 'sprites/enemy_tank.png';
 
   @override
-  void drawEnemyShape(Canvas canvas) {
-    final paint = Paint()..color = const Color(0xFFE65100);
-    canvas.drawRect(size.toRect(), paint);
-  }
+  Color get deathColor => const Color(0xFFE65100);
 }
 
 class SwarmEnemy extends EnemyComponent {
-  SwarmEnemy({super.statMultiplier = 1.0}) : super(
-    hp: 10,
-    baseSpeed: 55,
-    goldReward: 5,
-    leakDamage: 1,
-  ) {
+  SwarmEnemy({super.statMultiplier = 1.0})
+      : super(hp: 10, baseSpeed: 55, goldReward: 5, leakDamage: 1) {
     size = Vector2(16, 16);
   }
 
   @override
-  Color get deathColor => const Color(0xFFFDD835); // yellow burst
+  String get spritePath => 'sprites/enemy_swarm.png';
 
   @override
-  void drawEnemyShape(Canvas canvas) {
-    final paint = Paint()..color = const Color(0xFFFDD835);
-    canvas.drawRect(size.toRect(), paint);
-  }
+  Color get deathColor => const Color(0xFFFDD835);
 }
