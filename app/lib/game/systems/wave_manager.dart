@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import '../mini_td_game.dart';
 import '../components/enemy_component.dart';
+import 'sound_service.dart';
 
 class WaveManager extends Component with HasGameReference<MiniTdGame> {
   int currentWaveIndex = 0;
@@ -41,11 +42,13 @@ class WaveManager extends Component with HasGameReference<MiniTdGame> {
 
       if (waveFinished) {
         game.hudBridge.gold.value += 20;
+        SoundService.instance.playWaveClear();
         currentWaveIndex++;
 
-        // Win condition — all defined waves cleared
-        if (currentWaveIndex >= game.levelData.waves.length) {
-          game.triggerGameOver(win: true);
+        // Win condition — all defined waves cleared (skip if already in endless)
+        if (currentWaveIndex >= game.levelData.waves.length &&
+            !game.hudBridge.isEndlessMode.value) {
+          game.triggerWin();
           return;
         }
 

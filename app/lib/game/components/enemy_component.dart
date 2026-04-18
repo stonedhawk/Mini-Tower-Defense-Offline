@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../mini_td_game.dart';
+import '../systems/sound_service.dart';
 import 'death_effect.dart';
 
 class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame> {
@@ -82,6 +83,7 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
   }
 
   void _leak() {
+    SoundService.instance.playLeak();
     game.hudBridge.lives.value -= leakDamage;
     if (game.hudBridge.lives.value < 0) {
       game.hudBridge.lives.value = 0;
@@ -95,6 +97,7 @@ class EnemyComponent extends PositionComponent with HasGameReference<MiniTdGame>
   void takeDamage(int amount) {
     hp -= amount;
     if (hp <= 0) {
+      SoundService.instance.playHit();
       game.hudBridge.gold.value += goldReward;
       game.add(DeathEffect(position: position.clone(), color: deathColor));
       removeFromParent();
