@@ -55,9 +55,15 @@ class WaveManager extends Component with HasGameReference<MiniTdGame> {
           return;
         }
 
-        // Unlock 2 new build pads every 3 waves (after waves 3 and 6)
+        // Unlock 2 new build pads after waves 3 and 6.
         if (currentWaveIndex == 3 || currentWaveIndex == 6) {
           game.unlockNextPadBatch(2);
+        }
+
+        // After wave 12, unlock 1 bonus pad every 8 waves (capped at 10 extras).
+        final bonusIdx = currentWaveIndex - 12;
+        if (bonusIdx >= 0 && bonusIdx % 8 == 0 && bonusIdx ~/ 8 < 10) {
+          game.unlockNextPadBatch(1);
         }
 
         startNextWave();

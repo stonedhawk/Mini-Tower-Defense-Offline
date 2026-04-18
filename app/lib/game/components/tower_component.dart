@@ -202,7 +202,7 @@ class BoosterTowerComponent extends TowerComponent {
     if (game.hudBridge.gold.value < upgradeCost) return false;
     game.hudBridge.gold.value -= upgradeCost;
     level++;
-    attackRange *= 3; // 3× range per upgrade (not flat +10)
+    attackRange *= 1.45; // 1.45× range per upgrade
     size = Vector2.all(40.0 + (level - 1) * 4.0);
     return true;
   }
@@ -215,13 +215,16 @@ class BoosterTowerComponent extends TowerComponent {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final pulse = 0.15 + 0.05 * math.sin(game.elapsedTime * 3);
-    canvas.drawCircle(
-      (size / 2).toOffset(),
-      attackRange,
-      Paint()
-        ..color = const Color(0xFFFF9800).withValues(alpha: pulse)
-        ..style = PaintingStyle.fill,
-    );
+    // Pulsing aura only shown when selected — matches other towers' UX.
+    if (game.hudBridge.selectedTowerId.value == hashCode) {
+      final pulse = 0.15 + 0.05 * math.sin(game.elapsedTime * 3);
+      canvas.drawCircle(
+        (size / 2).toOffset(),
+        attackRange,
+        Paint()
+          ..color = const Color(0xFFFF9800).withValues(alpha: pulse)
+          ..style = PaintingStyle.fill,
+      );
+    }
   }
 }
