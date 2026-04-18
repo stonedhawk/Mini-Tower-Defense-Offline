@@ -220,12 +220,16 @@ class _GameScreenState extends State<GameScreen> {
                     style: const TextStyle(fontSize: 24, color: Colors.amber, fontWeight: FontWeight.bold),
                   ),
                 ),
-                ValueListenableBuilder<int>(
-                  valueListenable: _hudBridge.wave,
-                  builder: (context, wave, child) => Text(
-                    'Wave: $wave/10',
-                    style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: _hudBridge.isEndlessMode,
+                  builder: (context, endless, child) =>
+                    ValueListenableBuilder<int>(
+                      valueListenable: _hudBridge.wave,
+                      builder: (context, wave, child) => Text(
+                        endless ? 'Wave: $wave \u221e' : 'Wave: $wave/10',
+                        style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                 ),
                 ValueListenableBuilder<int>(
                   valueListenable: _hudBridge.lives,
@@ -269,6 +273,69 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ),
           ),
+          // Win overlay — shown after all waves cleared, before endless or exit
+          ValueListenableBuilder<bool>(
+            valueListenable: _hudBridge.showWinOverlay,
+            builder: (context, show, child) {
+              if (!show) return const SizedBox.shrink();
+              return Container(
+                color: Colors.black.withValues(alpha: 0.75),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.amber, width: 2),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'You Win!',
+                          style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.amber),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'All waves cleared!',
+                          style: TextStyle(fontSize: 18, color: Colors.white70),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.amber,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                              ),
+                              onPressed: () => _game.resumeEndless(),
+                              child: const Text('Keep Going \u221e', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            ),
+                            const SizedBox(width: 20),
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white38),
+                                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                              ),
+                              onPressed: () {
+                                _hudBridge.showWinOverlay.value = false;
+                                _game.triggerGameOver(win: true);
+                              },
+                              child: const Text('End Run', style: TextStyle(fontSize: 16)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
           // Tower tooltip overlay (Floating near selected tower)
           ValueListenableBuilder<int?>(
             valueListenable: _hudBridge.selectedTowerId,
