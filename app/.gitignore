@@ -30,7 +30,17 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+build/
+android/build/
+/android/app/build/
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/flutter_export_environment.sh
+/ios/ServiceDefinitions.json
+/ios/Runner/GeneratedPluginRegistrant.h
+/ios/Runner/GeneratedPluginRegistrant.m
+/macos/Flutter/GeneratedPluginRegistrant.swift
+/macos/Flutter/ephemeral/
+/web/flutter_bootstrap.js
 /coverage/
 
 # Symbolication related
