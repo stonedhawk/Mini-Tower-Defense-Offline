@@ -1,7 +1,7 @@
 # PRD: Mini Tower Defense
 
 ## 1. Product summary
-Mini Tower Defense is a compact offline tower defense game for Android built to teach real-time game-loop concepts without exploding scope.
+Mini Tower Defense is a compact offline tower defense game for Android, iOS and the web, built to teach real-time game-loop concepts without exploding scope.
 
 This project should be the first real-time game in the sequence. It is intentionally constrained to:
 - one map
@@ -30,7 +30,7 @@ This project should be the first real-time game in the sequence. It is intention
 
 ## 5. MVP scope
 ### Included
-- Android only
+- Android, iOS and Web (Android is the primary release target)
 - Offline only
 - One fixed map
 - One fixed enemy path

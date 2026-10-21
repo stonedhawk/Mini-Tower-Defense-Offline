@@ -20,7 +20,7 @@ Keep the shell simple:
 - Flutter
 - Dart
 - Flame
-- Android only
+- Android, iOS and Web (Android is the primary release target)
 - `shared_preferences` for small local save data
 - No backend
 - No network
@@ -169,7 +169,7 @@ Not approved for MVP:
 ## Tooling and stack setup for this project
 
 ### Mandatory stack
-- **Target platform:** Android only
+- **Target platforms:** Android (primary release target), iOS and Web
 - **App framework:** Flutter
 - **Language:** Dart
 - **IDE:** Android Studio
@@ -193,6 +193,14 @@ Not approved for MVP:
 Run:
 ```bash
 xcode-select --install
+```
+
+For iOS builds you also need the full Xcode app, CocoaPods, and the iOS
+platform component (simulator runtime, about 8 to 10 GB):
+```bash
+xcodebuild -version
+xcodebuild -downloadPlatform iOS
+xcrun simctl list devices available
 ```
 
 ### 3. Install Flutter SDK
