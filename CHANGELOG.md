@@ -11,6 +11,8 @@ and this project adheres to Semantic Versioning scaled down for prototyping:
 
 ### Added
 - **iOS platform folder** (`app/ios/`) with bundle id `com.antigravity.minitowerdefense` and landscape-only iPhone orientations, ready for simulator builds.
+- **Platform scope docs**: CLAUDE.md, AGENTS.md, PRD.md and TECHNICAL_DESIGN.md now list Android (primary release target), iOS and Web. README adds iOS simulator run and build steps.
+- **graphify setup**: graphify section in CLAUDE.md, PreToolUse hook in `.claude/settings.json`, and `graphify-out/` gitignored.
 - **Home screen layout tests** (`test/home_screen_layout_test.dart`) covering seven phone sizes, including the 2400x1080 emulator with its camera cutout and iPhone landscape with notch insets.
 
 ## [v1.1.0.0] - 2026-04-18
