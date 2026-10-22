@@ -7,6 +7,7 @@ and this project adheres to Semantic Versioning scaled down for prototyping:
 
 ## [Unreleased]
 ### Fixed
+- **Android launch crash after the app id change**: the Android namespace became `com.antigravity.minitowerdefense`, so the manifest's `.MainActivity` pointed at `com.antigravity.minitowerdefense.MainActivity`, but the class was still in `com.example.offlinegames.app` and the app could not start. `MainActivity.kt` now lives in `kotlin/com/antigravity/minitowerdefense/` with the matching package.
 - **Level card overflow on short landscape screens**: on a 2400x1080 phone the level cards overflowed by 41 pixels, the map icon covered the level name, and the START MISSION label was drawn below the card where taps did nothing. The home screen now uses `SafeArea`, tighter spacing below 480 logical pixels of height, a map icon that shrinks to fit, and a scale-down safety net for the card text. The whole card is tappable.
 
 ### Added
