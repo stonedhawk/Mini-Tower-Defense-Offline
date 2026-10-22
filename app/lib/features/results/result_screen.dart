@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import '../storage/save_service.dart';
 
+/// Number of waves the player fully cleared.
+///
+/// `waveReached` is the wave number shown in the HUD when the run ended.
+/// A loss happens during that wave, so it does not count as cleared.
+/// A win ends right after the last wave is cleared, so it does.
+int wavesCleared({required bool didWin, required int waveReached}) {
+  if (didWin) return waveReached;
+  return waveReached > 0 ? waveReached - 1 : 0;
+}
+
 class ResultScreen extends StatefulWidget {
   final int levelId;
   final bool didWin;
@@ -25,11 +35,12 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    SaveService.saveBestWave(widget.levelId, widget.waveReached);
-    _loadBestWave();
+    _saveAndLoadBestWave();
   }
 
-  Future<void> _loadBestWave() async {
+  /// Saves this run first so a new record shows up as the best right away.
+  Future<void> _saveAndLoadBestWave() async {
+    await SaveService.saveBestWave(widget.levelId, widget.waveReached);
     final best = await SaveService.getBestWave(widget.levelId);
     if (mounted) setState(() => _bestWave = best);
   }
@@ -38,9 +49,13 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget build(BuildContext context) {
     final headline = widget.didWin ? 'VICTORY' : 'GAME OVER';
     final headlineColor = widget.didWin ? Colors.greenAccent : Colors.redAccent;
+    final cleared = wavesCleared(
+      didWin: widget.didWin,
+      waveReached: widget.waveReached,
+    );
     final waveLine = widget.isEndlessMode
-        ? 'Waves Survived: ${widget.waveReached}'
-        : 'Waves Cleared: ${widget.waveReached}';
+        ? 'Waves Survived: $cleared'
+        : 'Waves Cleared: $cleared';
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -64,7 +79,7 @@ class _ResultScreenState extends State<ResultScreen> {
             if (widget.isEndlessMode) ...[
               const SizedBox(height: 12),
               Text(
-                'Best Score: $_bestWave waves',
+                'Best Wave: $_bestWave',
                 style: const TextStyle(fontSize: 22, color: Colors.amber),
               ),
             ],
