@@ -10,8 +10,9 @@ A polished, offline tower defense game built with Flutter + Flame. Designed for 
 Mini Tower Defense/          ← repo root
 ├── app/                     ← Flutter project (all source code lives here)
 │   ├── android/             ← Android platform files
+│   ├── ios/                 ← iOS platform files (bundle id com.antigravity.minitowerdefense)
 │   ├── macos/               ← macOS platform files (local testing only)
-│   ├── web/                 ← Web platform files (Chrome dev testing only)
+│   ├── web/                 ← Web platform files
 │   ├── assets/
 │   │   ├── images/sprites/  ← 7 sprite sheets (1024×128 PNG, 8 frames each)
 │   │   └── sounds/          ← SFX files
@@ -50,6 +51,7 @@ Mini Tower Defense/          ← repo root
 | Android Studio | latest | For Android SDK, emulator, and signing |
 | Android SDK | API 33+ (target), API 21+ (min) | Install via Android Studio SDK Manager |
 | Java / JDK | 17 | Required by Gradle |
+| Xcode | 26.x | iOS builds only; also needs the iOS platform component and CocoaPods |
 | Blender | 5.1+ | Only needed to regenerate sprite sheets |
 
 ---
@@ -79,6 +81,32 @@ flutter run -d <device-id>
 ### macOS (desktop, for quick local testing)
 ```bash
 flutter run -d macos
+```
+
+### iOS simulator
+```bash
+# One-time: install the iOS platform (simulator runtime, about 8 GB)
+xcodebuild -downloadPlatform iOS
+
+open -a Simulator
+flutter run -d "iPhone 17 Pro"
+```
+
+---
+
+## Building for the iOS simulator
+
+No signing or Apple account is needed for simulator builds.
+
+```bash
+cd app
+flutter build ios --simulator --debug
+# Output: build/ios/iphonesimulator/Runner.app
+
+# Install and launch on a booted simulator
+xcrun simctl boot "iPhone 17 Pro"
+xcrun simctl install booted build/ios/iphonesimulator/Runner.app
+xcrun simctl launch booted com.antigravity.minitowerdefense
 ```
 
 ---

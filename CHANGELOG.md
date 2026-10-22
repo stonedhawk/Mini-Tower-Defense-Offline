@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning scaled down for prototyping:
 `MAJOR.MINOR.PATCH.FEATURE` (e.g. 0.0.1.0)
 
+## [Unreleased]
+### Fixed
+- **Level card overflow on short landscape screens**: on a 2400x1080 phone the level cards overflowed by 41 pixels, the map icon covered the level name, and the START MISSION label was drawn below the card where taps did nothing. The home screen now uses `SafeArea`, tighter spacing below 480 logical pixels of height, a map icon that shrinks to fit, and a scale-down safety net for the card text. The whole card is tappable.
+
+### Added
+- **iOS platform folder** (`app/ios/`) with bundle id `com.antigravity.minitowerdefense` and landscape-only iPhone orientations, ready for simulator builds.
+- **Platform scope docs**: CLAUDE.md, AGENTS.md, PRD.md and TECHNICAL_DESIGN.md now list Android (primary release target), iOS and Web. README adds iOS simulator run and build steps.
+- **graphify setup**: graphify section in CLAUDE.md, PreToolUse hook in `.claude/settings.json`, and `graphify-out/` gitignored.
+- **Home screen layout tests** (`test/home_screen_layout_test.dart`) covering seven phone sizes, including the 2400x1080 emulator with its camera cutout and iPhone landscape with notch insets.
+
 ## [v1.1.0.0] - 2026-04-18
 ### Added
 - **Kill particle burst**: enemies explode into 8 coloured sparks on death matching their type (red Scout, orange Tank, yellow Swarm) via new `DeathEffect` component.

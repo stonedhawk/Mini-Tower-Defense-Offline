@@ -27,3 +27,10 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+# graphify knowledge graph: generated locally, regenerate with /graphify . --wiki --update
+graphify-out/
+
+# Claude Code: personal settings and session worktrees stay local
+.claude/settings.local.json
+.claude/worktrees/

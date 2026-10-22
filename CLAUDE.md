@@ -8,7 +8,7 @@ Read these files in order before coding:
 
 ## Non-negotiables
 - Keep the actual Flutter code in `/app`
-- Use Android only
+- Target platforms: Android (primary release target), iOS and Web
 - Stay inside MVP scope
 - Keep code beginner-friendly and heavily named, not overly abstract
 - Use placeholder visuals only
@@ -43,3 +43,15 @@ This applies whenever:
 - existing data models are changed
 - more than two files need to change in concert
 - a feature involves async, game-loop timing, or Flame lifecycle
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
+- graphify-out/ is gitignored; if it is missing, generate it with /graphify . --wiki
+- To regenerate: /graphify . --wiki --update
+- graphify does not detect `.dart` files, so a plain run and the `_rebuild_code` helper both miss the game code. When building or updating the graph, pass `app/lib/**/*.dart` and `app/test/**/*.dart` to the semantic extraction step as documents, and skip `app/ios/Pods`, `app/ios/Flutter/ephemeral`, generated plugin registrants, and launcher icons.

@@ -9,7 +9,7 @@ Read these files before doing any work:
 ## Project conventions
 - Project planning docs live in this folder
 - Flutter app source must live in `/app`
-- Android only
+- Android, iOS and Web (Android is the primary release target)
 - Offline only
 - Placeholder art only
 - Beginner-friendly code over clever code

@@ -41,42 +41,63 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      body: Column(
-        children: [
-          const SizedBox(height: 60),
-          const Text(
-            'Mini Tower Defense',
-            style: TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Select a Battlefield',
-            style: TextStyle(fontSize: 18, color: Colors.white70),
-          ),
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-              itemCount: LevelRegistry.allLevels.length,
-              itemBuilder: (context, index) {
-                final level = LevelRegistry.allLevels[index];
-                return _buildLevelCard(level);
-              },
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 40),
-            child: Text(
-              'v1.0.0.0',
-              style: TextStyle(color: Colors.white24),
-            ),
-          ),
-        ],
+      // SafeArea keeps the cards clear of camera cutouts and the iPhone notch.
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Landscape phones are only about 360 to 410 logical pixels tall,
+            // so tighten the spacing there to leave room for the level cards.
+            final bool isShortScreen = constraints.maxHeight < 480;
+
+            return Column(
+              children: [
+                SizedBox(height: isShortScreen ? 16 : 60),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  // Shrinks the title on narrow (portrait) screens instead of overflowing.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Mini Tower Defense',
+                      style: TextStyle(
+                        fontSize: isShortScreen ? 36 : 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: isShortScreen ? 4 : 10),
+                const Text(
+                  'Select a Battlefield',
+                  style: TextStyle(fontSize: 18, color: Colors.white70),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: isShortScreen ? 16 : 40,
+                    ),
+                    itemCount: LevelRegistry.allLevels.length,
+                    itemBuilder: (context, index) {
+                      final level = LevelRegistry.allLevels[index];
+                      return _buildLevelCard(level);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(bottom: isShortScreen ? 8 : 40),
+                  child: const Text(
+                    'v1.0.0.0',
+                    style: TextStyle(color: Colors.white24),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -89,6 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, scale, child) => Transform.scale(
         scale: scale,
         child: GestureDetector(
+          key: ValueKey('level-card-${level.id}'),
+          // The whole card, START MISSION included, starts the mission.
+          behavior: HitTestBehavior.opaque,
           onTap: () async {
             await Navigator.of(context).push(
               MaterialPageRoute(
@@ -112,52 +136,73 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: level.backgroundColor.withValues(alpha: 0.3),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    child: Center(
-                      child: Hero(
-                        tag: 'level-icon-${level.id}',
-                        child: Icon(Icons.map, size: 80, color: level.backgroundColor),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        level.name,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Best Wave: $bestWave',
-                        style: const TextStyle(fontSize: 16, color: Colors.amber),
-                      ),
-                      const SizedBox(height: 20),
-                      const Row(
-                        children: [
-                          Text(
-                            'START MISSION',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+            child: LayoutBuilder(
+              builder: (context, cardConstraints) {
+                final double cardHeight = cardConstraints.maxHeight;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // The map picture takes whatever height the text leaves over.
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: level.backgroundColor.withValues(alpha: 0.3),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        // Shrinks the icon to fit so it never covers the level name.
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Hero(
+                            tag: 'level-icon-${level.id}',
+                            child: Icon(Icons.map, size: 80, color: level.backgroundColor),
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_ios, size: 12, color: Colors.blueAccent),
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                    // Safety net: if the card is ever shorter than the text
+                    // (tiny screen or very large font), scale the text down
+                    // instead of letting START MISSION spill outside the card.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: cardHeight),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                level.name,
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Best Wave: $bestWave',
+                                style: const TextStyle(fontSize: 16, color: Colors.amber),
+                              ),
+                              const SizedBox(height: 12),
+                              const Row(
+                                children: [
+                                  Text(
+                                    'START MISSION',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward_ios, size: 12, color: Colors.blueAccent),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
