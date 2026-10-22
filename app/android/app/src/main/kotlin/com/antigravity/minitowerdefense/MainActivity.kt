@@ -1,4 +1,4 @@
-package com.example.offlinegames.app
+package com.antigravity.minitowerdefense
 
 import io.flutter.embedding.android.FlutterActivity
 
