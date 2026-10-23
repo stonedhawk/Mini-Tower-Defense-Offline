@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/home/home_screen.dart';
+import 'ftue_truth.dart';
 
 class MiniTdApp extends StatelessWidget {
   const MiniTdApp({super.key});
@@ -14,6 +15,7 @@ class MiniTdApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       home: const HomeScreen(),
+      navigatorObservers: [ftueRouteObserver],
       debugShowCheckedModeBanner: false,
     );
   }

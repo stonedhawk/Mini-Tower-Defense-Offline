@@ -16,6 +16,8 @@ class HudBridge {
   final ValueNotifier<bool> showWinOverlay = ValueNotifier(false);
   /// Flips to true once the player chooses Keep Going — drives wave counter display.
   final ValueNotifier<bool> isEndlessMode = ValueNotifier(false);
+  /// Flips to true when the first tower is built. Towers cannot be sold, so it stays true.
+  final ValueNotifier<bool> hasBuiltTower = ValueNotifier(false);
 
   void reset() {
     gold.value = GameConstants.startingGold;
@@ -26,5 +28,6 @@ class HudBridge {
     selectedBuildType.value = null;
     showWinOverlay.value = false;
     isEndlessMode.value = false;
+    hasBuiltTower.value = false;
   }
 }

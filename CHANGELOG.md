@@ -6,7 +6,11 @@ and this project adheres to Semantic Versioning scaled down for prototyping:
 `MAJOR.MINOR.PATCH.FEATURE` (e.g. 0.0.1.0)
 
 ## [Unreleased]
+### Added
+- **FTUE truth log (debug builds only)**: each time the player's screen changes, debug builds print one line `FTUE_TRUTH step=<id>` to the device log, never the same id twice in a row, for ftue-friction-agent's golden recordings. Ids: `level_select`, `empty_battlefield`, `build_menu`, `defending`, `run_end` (You Win! overlay), `game_over`, and `unknown` for the victory screen. Release builds print nothing and nothing is stored or sent.
+
 ### Fixed
+- **Best waves on the level select after a run**: they reloaded as soon as the result screen replaced the game, racing the result screen's save. They now reload when the level select shows again.
 - **Waves Cleared count on the result screen**: after a loss, the result screen showed the wave the player was on as "Waves Cleared", so losing during wave 8 read "Waves Cleared: 8". A loss now counts only the waves before it (7), a win still counts all 10, and endless mode's "Waves Survived" follows the same rule. The endless "Best Score: N waves" line now reads "Best Wave: N", matching the level card, since the saved best is the highest wave reached.
 - **Best wave on a record-setting run**: the result screen loaded the saved best before this run's save finished, so a new record showed the old best (0 on a first endless run). It now saves first, then loads.
 - **Android launch crash after the app id change**: the Android namespace became `com.antigravity.minitowerdefense`, so the manifest's `.MainActivity` pointed at `com.antigravity.minitowerdefense.MainActivity`, but the class was still in `com.example.offlinegames.app` and the app could not start. `MainActivity.kt` now lives in `kotlin/com/antigravity/minitowerdefense/` with the matching package.
