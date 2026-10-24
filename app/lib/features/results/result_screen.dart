@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/ftue_truth.dart';
 import '../storage/save_service.dart';
 
 /// Number of waves the player fully cleared.
@@ -35,6 +36,8 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
+    // No ftue step describes the victory screen, so a win reports unknown.
+    FtueTruth.report(widget.didWin ? FtueStep.unknown : FtueStep.gameOver);
     _saveAndLoadBestWave();
   }
 

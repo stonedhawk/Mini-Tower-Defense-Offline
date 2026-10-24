@@ -161,6 +161,7 @@ class MiniTdGame extends FlameGame {
         break;
     }
     pad.isOccupied = true;
+    hudBridge.hasBuiltTower.value = true;
     return true;
   }
 }

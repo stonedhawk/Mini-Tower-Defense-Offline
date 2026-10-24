@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../../app/ftue_truth.dart';
 import '../../game/mini_td_game.dart';
 import '../../game/components/hud_bridge.dart';
 import '../results/result_screen.dart';
@@ -18,7 +21,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Map<int, int> _bestWaves = {};
 
   @override
@@ -27,11 +30,36 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadAllBestWaves();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) ftueRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    ftueRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// The level select is showing for the first time.
+  @override
+  void didPush() => FtueTruth.report(FtueStep.levelSelect);
+
+  /// The player came back to the level select from a mission or a result screen.
+  @override
+  void didPopNext() {
+    FtueTruth.report(FtueStep.levelSelect);
+    _loadAllBestWaves();
+  }
+
   Future<void> _loadAllBestWaves() async {
     final waves = <int, int>{};
     for (final level in LevelRegistry.allLevels) {
       waves[level.id] = await SaveService.getBestWave(level.id);
     }
+    if (!mounted) return;
     setState(() {
       _bestWaves = waves;
     });
@@ -113,13 +141,13 @@ class _HomeScreenState extends State<HomeScreen> {
           key: ValueKey('level-card-${level.id}'),
           // The whole card, START MISSION included, starts the mission.
           behavior: HitTestBehavior.opaque,
-          onTap: () async {
-            await Navigator.of(context).push(
+          // Best waves reload in didPopNext, once the player is back here.
+          onTap: () {
+            Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => GameScreen(level: level),
               ),
             );
-            _loadAllBestWaves();
           },
           child: Container(
             width: 250,
@@ -222,6 +250,26 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   late final HudBridge _hudBridge;
   late final MiniTdGame _game;
+  bool _truthReportScheduled = false;
+
+  /// Reports which battlefield step is showing, once per batch of changes.
+  ///
+  /// Building a tower closes the menu and then marks a tower as built in the
+  /// same tap, so the report waits for a microtask to see both. It is skipped
+  /// once this screen is no longer on top, for example after End Run.
+  void _scheduleTruthReport() {
+    if (_truthReportScheduled) return;
+    _truthReportScheduled = true;
+    scheduleMicrotask(() {
+      _truthReportScheduled = false;
+      if (!mounted || ModalRoute.isCurrentOf(context) != true) return;
+      FtueTruth.report(battlefieldStep(
+        winOverlay: _hudBridge.showWinOverlay.value,
+        buildMenuOpen: _hudBridge.selectedPadIndex.value != null,
+        hasBuiltTower: _hudBridge.hasBuiltTower.value,
+      ));
+    });
+  }
 
   void _showNotEnoughGold() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -253,6 +301,20 @@ class _GameScreenState extends State<GameScreen> {
         );
       },
     );
+
+    _hudBridge.showWinOverlay.addListener(_scheduleTruthReport);
+    _hudBridge.selectedPadIndex.addListener(_scheduleTruthReport);
+    _hudBridge.hasBuiltTower.addListener(_scheduleTruthReport);
+    // The first report waits until the map and its build pads are on screen.
+    _game.loaded.then((_) => _scheduleTruthReport());
+  }
+
+  @override
+  void dispose() {
+    _hudBridge.showWinOverlay.removeListener(_scheduleTruthReport);
+    _hudBridge.selectedPadIndex.removeListener(_scheduleTruthReport);
+    _hudBridge.hasBuiltTower.removeListener(_scheduleTruthReport);
+    super.dispose();
   }
 
   @override

@@ -228,3 +228,10 @@ Each sheet is 1024×128 px — 8 frames of 128×128 for a single walk/idle cycle
 | `app/lib/game/config/levels.dart` | All 3 level definitions (waypoints, pads, waves) |
 | `app/lib/features/home/home_screen.dart` | Flutter UI — HUD, overlays, tower-selection menu |
 | `app/lib/features/results/result_screen.dart` | Victory / game-over screen with best-score display |
+
+## FTUE truth log
+
+Debug builds print one line to the device log each time the player's screen changes, for ftue-friction-agent's golden recordings: `FTUE_TRUTH step=<id>` with ids `level_select`, `empty_battlefield`, `build_menu`, `defending`, `run_end`, `game_over` and `unknown` (the victory screen). Release builds print nothing.
+
+- Android: `adb logcat -v epoch -s flutter`, filtered for `FTUE_TRUTH`.
+- iOS simulator: `xcrun simctl spawn booted log stream --style ndjson --predicate 'eventMessage CONTAINS "FTUE_TRUTH"'`.
